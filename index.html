@@ -3,1180 +3,952 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battle Tags v6.2.1 (Stable)</title>
+    <title>HAVOK 205 Family App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .hidden { display: none !important; }
-        input, select { -webkit-appearance: none; }
-        .active-scale:active { transform: scale(0.96); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            background-color: #f8fafc; padding: 5px; border-radius: 5px; cursor: pointer;
-        }
-        @keyframes splashFadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .splash-animate { animation: splashFadeIn 0.8s ease-out forwards; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0) rotate(0deg); }
-            25% { transform: translateX(-6px) rotate(-6deg); }
-            50% { transform: translateX(6px) rotate(6deg); }
-            75% { transform: translateX(-6px) rotate(-6deg); }
-        }
-        .animate-shake {
-            animation: shake 0.5s ease-in-out;
-        }
+        /* Custom scrollbar for horizontal scrolling on large tables */
+        .table-container::-webkit-scrollbar { height: 8px; }
+        .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Hide scrollbar for nav */
+        .hide-scroll-bar::-webkit-scrollbar { display: none; }
+        .hide-scroll-bar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Sticky column styling */
+        .sticky-col { position: sticky; left: 0; background-color: white; z-index: 10; border-right: 2px solid #e2e8f0; }
+        
+        /* Dropdown colors */
+        .status-attending { background-color: #dcfce7; color: #166534; }
+        .status-not-attending { background-color: #fee2e2; color: #991b1b; }
+        .status-unsure { background-color: #f3f4f6; color: #4b5563; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans min-h-screen pb-24 text-center">
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
 
-    <!-- SPLASH SCREEN -->
-    <div id="screen-splash" class="fixed inset-0 z-[600] bg-white flex flex-col items-center justify-center transition-opacity duration-1000 overflow-hidden">
-        <img src="IMG_2087.png" alt="BattleTags" class="w-[96rem] md:w-[120rem] lg:w-[144rem] max-w-[98vw] h-auto splash-animate" onerror="this.outerHTML='<h1 class=\'text-4xl font-black text-emerald-600\'>BATTLETAGS</h1><p class=\'text-slate-400 mt-2\'>Logo Not Found</p>'">
-    </div>
+    <!-- Header -->
+    <header class="bg-blue-900 text-white shadow-md border-b-4 border-yellow-400">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <h1 class="text-2xl font-bold tracking-tight uppercase text-yellow-400">Havoc 205 Family</h1>
+            <div class="flex items-center gap-3">
+                <!-- Sync Indicator -->
+                <span id="sync-status" class="hidden text-xs text-green-300 font-medium">● Syncing</span>
+                <span class="text-sm bg-blue-950 text-yellow-400 px-3 py-1 rounded-full border border-blue-800 shadow-inner">U13 House League</span>
+            </div>
+        </div>
+    </header>
 
-    <!-- WHATSAPP SUCCESS MODAL -->
-    <div id="modal-success" class="fixed inset-0 z-[500] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center hidden p-6 transition-opacity duration-300">
-        <div class="bg-white rounded-[2.5rem] p-8 max-w-sm w-full text-center space-y-6 shadow-2xl scale-0 transition-transform duration-300" id="modal-success-content">
-            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                <i data-lucide="check-circle-2" class="w-10 h-10"></i>
-            </div>
-            <div>
-                <h3 id="modal-success-title" class="text-3xl font-black text-slate-800 tracking-tight">Success!</h3>
-                <p id="modal-success-subtitle" class="text-slate-500 text-sm mt-2 font-medium">Your data has been synced.</p>
-            </div>
-            <div class="space-y-3 mt-4">
-                <a id="wa-share-btn" href="#" target="_blank" onclick="closeSuccessModal()" class="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-[#1ebd5a] transition-all shadow-lg active-scale flex items-center justify-center gap-2">
-                    <i data-lucide="message-circle" class="w-5 h-5"></i> Send to WhatsApp
-                </a>
-                <button onclick="closeSuccessModal()" class="w-full bg-slate-100 text-slate-500 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all active-scale">
-                    Skip
+    <!-- Navigation Tabs -->
+    <nav class="bg-white shadow border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex overflow-x-auto hide-scroll-bar gap-2 pt-2 items-end" aria-label="Tabs">
+                
+                <!-- Game Tabs (Light) -->
+                <button onclick="switchTab('full-schedule')" id="tab-full-schedule" class="tab-btn whitespace-nowrap py-3 px-4 border-b-4 font-bold text-sm border-yellow-400 text-blue-900 transition-colors">
+                    Schedule
+                </button>
+                <button onclick="switchTab('schedule')" id="tab-schedule" class="tab-btn whitespace-nowrap py-3 px-4 border-b-4 border-transparent font-medium text-sm text-gray-500 hover:text-blue-800 hover:border-gray-300 transition-colors">
+                    Availability
+                </button>
+                <button onclick="switchTab('results')" id="tab-results" class="tab-btn whitespace-nowrap py-3 px-4 border-b-4 border-transparent font-medium text-sm text-gray-500 hover:text-blue-800 hover:border-gray-300 transition-colors">
+                    Game Results
+                </button>
+
+                <!-- Divider -->
+                <div class="w-px h-6 bg-gray-300 mx-2 mb-3 shrink-0"></div>
+
+                <!-- Team Tabs (Dark/Inverse) -->
+                <button onclick="switchTab('contacts')" id="tab-contacts" data-theme="dark" class="tab-btn rounded-t-md whitespace-nowrap py-3 px-4 border-b-4 border-transparent font-medium text-sm text-blue-200 bg-blue-900 hover:text-white hover:bg-blue-800 transition-colors">
+                    Contacts
+                </button>
+                <button onclick="switchTab('rules')" id="tab-rules" data-theme="dark" class="tab-btn rounded-t-md whitespace-nowrap py-3 px-4 border-b-4 border-transparent font-medium text-sm text-blue-200 bg-blue-900 hover:text-white hover:bg-blue-800 transition-colors">
+                    League Rules
                 </button>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <!-- NO PHOTO CONFIRMATION MODAL -->
-    <div id="modal-confirm-photo" class="fixed inset-0 z-[500] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center hidden p-6 transition-opacity duration-300">
-        <div class="bg-white rounded-[2.5rem] p-8 max-w-sm w-full text-center space-y-6 shadow-2xl scale-0 transition-transform duration-300" id="modal-confirm-photo-content">
-            <div class="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                <i data-lucide="camera-off" class="w-10 h-10"></i>
-            </div>
-            <div>
-                <h3 class="text-3xl font-black text-slate-800 tracking-tight leading-tight">No Evidence?</h3>
-                <p class="text-slate-500 text-sm mt-3 font-medium">Are you sure you don't want to upload photographic evidence of the carnage?</p>
-            </div>
-            <div class="space-y-3 mt-4">
-                <button onclick="cancelPhotoSkip()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg active-scale flex items-center justify-center gap-2">
-                    <i data-lucide="camera" class="w-5 h-5"></i> Add Photo
-                </button>
-                <button onclick="confirmPhotoSkip()" class="w-full bg-slate-100 text-slate-500 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all active-scale">
-                    Submit Without Evidence
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- LOADING SCREEN -->
-    <div id="screen-loading" class="fixed inset-0 z-[200] bg-slate-50 flex items-center justify-center">
-        <div class="font-black text-slate-400 uppercase tracking-widest flex items-center gap-3 animate-pulse">
-            <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> Syncing Vault...
-        </div>
-    </div>
-
-    <!-- PHONE AUTH: ENTER NUMBER -->
-    <div id="screen-phone" class="fixed inset-0 z-[100] bg-emerald-950 flex flex-col items-center justify-center p-6 text-center hidden">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl max-w-sm w-full space-y-8 relative overflow-hidden">
-            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
-                <i data-lucide="smartphone" class="w-10 h-10"></i>
-            </div>
-            <div>
-                <h2 class="text-3xl font-black text-slate-800 tracking-tight leading-tight">Secure Vault</h2>
-                <p class="text-slate-500 text-sm mt-3 font-medium">Enter your mobile number to log in or register.</p>
-            </div>
-            <form id="phone-form" onsubmit="sendOTP(event)" class="space-y-4">
-                <input type="tel" id="phone-input" required placeholder="+1 416 555 1234" class="w-full p-5 bg-slate-50 border-2 border-slate-100 focus:border-emerald-500 rounded-2xl text-center font-black text-2xl outline-none tracking-widest">
-                <button type="submit" id="send-code-btn" class="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl transition-all active-scale">Send Code</button>
-            </form>
-            <!-- Invisible reCAPTCHA container required by Firebase -->
-            <div id="recaptcha-container"></div>
-        </div>
-        <p class="text-emerald-500/50 text-[10px] uppercase tracking-widest font-bold mt-8">Enterprise SaaS Edition</p>
-    </div>
-
-    <!-- PHONE AUTH: VERIFY OTP -->
-    <div id="screen-otp" class="fixed inset-0 z-[95] bg-emerald-950 flex flex-col items-center justify-center p-6 text-center hidden">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl max-w-sm w-full space-y-8">
-            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
-                <i data-lucide="shield-check" class="w-10 h-10"></i>
-            </div>
-            <div>
-                <h2 class="text-3xl font-black text-slate-800 tracking-tight leading-tight">Verification</h2>
-                <p class="text-slate-500 text-sm mt-3 font-medium">Enter the 6-digit code sent to your phone.</p>
-            </div>
-            <form id="otp-form" onsubmit="verifyOTP(event)" class="space-y-4">
-                <input type="number" id="otp-input" required placeholder="123456" class="w-full p-5 bg-slate-50 border-2 border-slate-100 focus:border-emerald-500 rounded-2xl text-center font-black text-3xl outline-none tracking-[0.5em]">
-                <button type="submit" id="verify-code-btn" class="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl transition-all active-scale">Verify Code</button>
-                <button type="button" onclick="showScreen('phone')" class="w-full py-3 text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">Cancel</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- IDENTITY CLAIM (MULTI-TENANT ONBOARDING) -->
-    <div id="screen-identity" class="fixed inset-0 z-[90] bg-emerald-900 flex flex-col items-center justify-center p-6 text-center hidden">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl max-w-sm w-full space-y-8 border border-emerald-100/20">
-            <div class="w-20 h-20 bg-amber-100 text-amber-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
-                <i data-lucide="user-plus" class="w-10 h-10"></i>
-            </div>
-            <div>
-                <h2 class="text-3xl font-black text-slate-800 tracking-tight tracking-tighter">Claim Profile</h2>
-                <p class="text-slate-500 text-xs mt-2 font-medium leading-relaxed">This is your first time logging in. Select your name to permanently lock your phone number to your BattleTag identity.</p>
-            </div>
-            <div id="identity-list" class="space-y-3 max-h-72 overflow-y-auto pr-2 custom-scrollbar">
-                <!-- Unclaimed Roster Populated by JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN APP SCREEN -->
-    <div id="screen-app" class="hidden">
-        <header class="bg-emerald-900 text-white p-4 md:p-6 shadow-2xl sticky top-0 z-50">
-            <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex flex-col items-center md:items-start">
-                    <h1 class="text-2xl font-black flex items-center gap-2 tracking-tight uppercase">
-                        <i data-lucide="trophy" class="w-6 h-6 text-emerald-400"></i> BATTLE TAGS
-                    </h1>
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- TAB 0: Full Schedule -->
+        <section id="content-full-schedule" class="tab-content block">
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-blue-900">Team Schedule</h2>
+                    <p class="text-sm text-gray-500 mt-1">All upcoming practices and games with times and locations.</p>
                 </div>
-                <nav class="flex bg-emerald-950/40 rounded-2xl p-1.5 w-full md:w-auto border border-emerald-800/50 backdrop-blur-sm overflow-x-auto custom-scrollbar">
-                    <button onclick="switchView('battle')" id="nav-battle" class="flex-1 py-3 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all text-emerald-100 opacity-60 flex items-center gap-2 justify-center whitespace-nowrap">
-                        Go to Battle
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="toggle-past-schedule-btn" onclick="togglePastSchedule()" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 transition-colors hidden shadow-sm border border-gray-300">
+                        Show Past Events
                     </button>
-                    <button onclick="switchView('submit')" id="nav-submit" class="flex-1 py-3 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all text-emerald-100 opacity-60 flex items-center gap-2 justify-center whitespace-nowrap">
-                        Submit Results
-                    </button>
-                    <button onclick="switchView('standings')" id="nav-standings" class="flex-1 py-3 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all bg-white text-emerald-900 shadow-sm flex items-center gap-2 justify-center whitespace-nowrap">
-                        Standings
-                    </button>
-                    <button onclick="switchView('damage')" id="nav-damage" class="flex-1 py-3 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all text-emerald-100 opacity-60 flex items-center gap-2 justify-center whitespace-nowrap">
-                        <i data-lucide="swords" class="w-3 h-3 hidden md:inline"></i> Damage
-                    </button>
-                    <button onclick="switchView('gallery')" id="nav-gallery" class="flex-1 py-3 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all text-emerald-100 opacity-60 flex items-center gap-2 justify-center whitespace-nowrap">
-                        <i data-lucide="image" class="w-3 h-3 hidden md:inline"></i> Gallery
-                    </button>
-                    <button onclick="switchView('scheduled')" id="nav-scheduled" class="flex-1 py-3 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all text-emerald-100 opacity-60 flex items-center gap-2 justify-center whitespace-nowrap">
-                        <i data-lucide="calendar-days" class="w-3 h-3 hidden md:inline"></i> Scheduled
-                    </button>
-                    <button onclick="switchView('rules')" id="nav-rules" class="flex-1 py-3 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all text-emerald-100 opacity-60 flex items-center gap-2 justify-center whitespace-nowrap">
-                        <i data-lucide="book-open" class="w-3 h-3 hidden md:inline"></i> Rules
-                    </button>
-                </nav>
+                </div>
             </div>
-        </header>
 
-        <main class="max-w-4xl mx-auto p-4 md:p-8 space-y-12">
+            <div class="bg-white shadow rounded-lg overflow-hidden border border-gray-200">
+                <div class="overflow-x-auto w-full">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th scope="col" class="py-3 px-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">Date</th>
+                                <th scope="col" class="py-3 px-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">Time</th>
+                                <th scope="col" class="py-3 px-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">Event</th>
+                                <th scope="col" class="py-3 px-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">Location</th>
+                                <th scope="col" class="py-3 px-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="full-schedule-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 1: Schedule & Availability -->
+        <section id="content-schedule" class="tab-content hidden">
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-blue-900">Event Availability</h2>
+                    <p class="text-sm text-gray-500 mt-1">Select player availability for Games & Practices. Past events are hidden automatically.</p>
+                </div>
+                <button id="toggle-past-btn" onclick="togglePastGames()" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 transition-colors hidden shadow-sm border border-gray-300">
+                    Show Past Events
+                </button>
+            </div>
+
+            <div class="bg-white shadow rounded-lg overflow-hidden border border-gray-200">
+                <div class="table-container overflow-x-auto w-full">
+                    <table class="w-max min-w-full divide-y divide-gray-200 table-fixed">
+                        <thead class="bg-gray-100" id="schedule-head">
+                            <!-- Populated by JS -->
+                        </thead>
+                        <tbody id="schedule-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: Game Results & League Submission -->
+        <section id="content-results" class="tab-content hidden">
             
-            <section id="view-battle" class="hidden space-y-12">
-                <div class="bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-200 text-left relative overflow-hidden">
-                    <div class="mb-8 flex justify-between items-start">
-                        <div>
-                            <h2 class="text-3xl md:text-4xl font-black text-slate-800 tracking-tight">Go to Battle</h2>
-                            <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">Schedule your next match</p>
-                        </div>
-                        <button onclick="logout()" class="p-2 text-slate-400 hover:text-rose-500 transition-colors bg-slate-50 rounded-xl" title="Logout">
-                            <i data-lucide="log-out" class="w-5 h-5"></i>
+            <!-- Score Sheet Submission Panel -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-8 shadow-sm">
+                <h3 class="text-lg font-bold text-blue-900 mb-3 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    Official Score Submission
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">Send results to Mgsa@live.ca and cc lizdinelle@hotmail.com. Remember to attach the photo of the score sheet!</p>
+                <div class="flex flex-col md:flex-row gap-4 items-start md:items-end">
+                    <div class="w-full md:w-1/3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Game</label>
+                        <select id="league-game-select" class="block w-full pl-3 pr-8 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-900 focus:border-blue-900 sm:text-sm rounded-md shadow-sm border">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="w-full md:w-1/3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Score Sheet Photo</label>
+                        <input type="file" id="scoresheet-upload" accept="image/*" onchange="previewScoreSheet(event)" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition-colors">
+                    </div>
+                    <div class="w-full md:w-1/3">
+                        <button onclick="emailLeague()" class="w-full bg-blue-900 text-yellow-400 font-bold px-4 py-2 rounded-md hover:bg-blue-800 transition-colors shadow flex justify-center items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                            Draft Email to League
                         </button>
                     </div>
-
-                    <form id="schedule-form" class="space-y-6 bg-slate-50 p-6 md:p-8 rounded-3xl border border-slate-100">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="space-y-2">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Who have you scheduled a battle with?</label>
-                                <select id="schedule-opponent" required class="w-full p-4 bg-white border-2 border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:border-emerald-500 appearance-none cursor-pointer shadow-sm">
-                                    <option value="">Select Opponent...</option>
-                                </select>
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">When is the battle to take place?</label>
-                                <input type="date" id="schedule-date" required class="w-full p-4 bg-white border-2 border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:border-emerald-500 shadow-sm">
-                            </div>
-                        </div>
-
-                        <div class="text-center py-4">
-                            <span class="font-black text-emerald-600 uppercase tracking-[0.15em] text-sm md:text-base">Good luck on your match!</span>
-                        </div>
-
-                        <button type="submit" id="schedule-btn" class="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl transition-all active-scale flex items-center justify-center gap-2">
-                            <i data-lucide="calendar-plus" class="w-5 h-5"></i> Schedule Match
-                        </button>
-                    </form>
-
-                    <div class="mt-12 pt-10 border-t border-slate-100 flex flex-col items-center">
-                        <h3 class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 text-center">Ask the golf gods about your fate</h3>
-                        <div id="magic-8-ball" onclick="shakeMagicBall()" class="w-48 h-48 rounded-full bg-slate-900 shadow-[inset_0_-15px_30px_rgba(0,0,0,0.8),0_15px_25px_rgba(0,0,0,0.2)] flex items-center justify-center cursor-pointer transition-transform active:scale-95 relative border-4 border-slate-800 group">
-                            <div class="absolute inset-3 rounded-full border border-slate-700/50"></div>
-                            <div class="absolute top-4 left-8 w-16 h-8 bg-white/10 rounded-[100%] rotate-[-30deg]"></div>
-                            <div id="magic-8-text" class="text-emerald-400 font-bold text-center px-6 leading-tight drop-shadow-[0_0_8px_rgba(16,185,129,0.8)] z-10 flex flex-col items-center justify-center h-full w-full">
-                                <span class="text-5xl opacity-30 font-serif italic tracking-tighter mb-1">8</span>
-                                <span class="text-[10px] uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Tap to Ask</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SUBMIT RESULTS SECTION -->
-            <section id="view-submit" class="hidden space-y-12">
-                <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-200 text-left relative overflow-hidden">
-                    <div class="mb-8 flex justify-between items-start">
-                        <div>
-                            <h3 class="text-3xl font-black text-slate-800 tracking-tight">Report Capture</h3>
-                            <p class="text-slate-500 text-sm font-medium mt-2">
-                                Reporting as <span id="display-user-name" class="text-emerald-600 font-bold uppercase">...</span>
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <form id="match-form" class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="space-y-2">
-                                <label class="block text-[10px] font-black text-rose-500 uppercase tracking-widest ml-1">Defeated Opponent</label>
-                                <select id="report-opponent" required class="w-full p-4 bg-slate-50 border-2 border-rose-100 rounded-2xl font-bold text-slate-700 outline-none focus:border-rose-400 appearance-none cursor-pointer">
-                                    <option value="">Select Opponent...</option>
-                                </select>
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Match Date</label>
-                                <input type="date" id="match-date" required class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 outline-none focus:border-emerald-500">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                            <div class="space-y-2">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Holes Up</label>
-                                <input type="number" id="holes-up" required min="1" max="18" placeholder="3" class="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:border-emerald-500">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Remaining</label>
-                                <input type="number" id="holes-remaining" required min="0" max="17" placeholder="2" class="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 outline-none focus:border-emerald-500">
-                            </div>
-                        </div>
-
-                        <div class="space-y-2 bg-slate-50 border border-slate-100 p-4 rounded-3xl">
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1">
-                                <i data-lucide="camera" class="w-3 h-3"></i> Optional Evidence
-                            </label>
-                            <input type="file" id="match-photo" accept="image/*" class="w-full text-sm text-slate-500 outline-none cursor-pointer">
-                        </div>
-
-                        <button type="submit" id="submit-btn" class="w-full bg-slate-900 text-white py-6 rounded-2xl font-black text-sm uppercase tracking-[0.2em] hover:bg-black transition-all shadow-2xl active-scale flex items-center justify-center gap-2">
-                            <i data-lucide="upload-cloud" class="w-5 h-5"></i> Submit Win
-                        </button>
-                    </form>
-                </div>
-            </section>
-
-            <!-- LIVE STANDINGS SECTION -->
-            <section id="view-standings" class="space-y-8 text-left">
-                <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-200">
-                    <h2 class="text-3xl font-black text-slate-800 tracking-tight">Live Standings</h2>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Season Rankings</p>
                 </div>
                 
-                <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden text-left">
-                    <div class="grid grid-cols-12 gap-2 p-4 md:p-5 border-b border-slate-100 bg-slate-50/50 font-black text-[9px] md:text-xs text-slate-400 uppercase tracking-widest cursor-pointer select-none">
-                        <div onclick="sortLeaderboard('name')" class="col-span-6 hover:text-emerald-500 flex items-center gap-1 transition-colors">Player <span id="sort-name" class="text-emerald-500"></span></div>
-                        <div onclick="sortLeaderboard('played')" class="col-span-2 text-center hover:text-emerald-500 flex justify-center items-center gap-1 transition-colors" title="Matches Played"><span class="text-sm md:text-base">⚔️</span><span class="hidden md:inline">Ply</span> <span id="sort-played" class="text-emerald-500"></span></div>
-                        <div onclick="sortLeaderboard('won')" class="col-span-2 text-center hover:text-emerald-500 flex justify-center items-center gap-1 transition-colors" title="Tags Won"><span class="text-sm md:text-base text-emerald-500">W</span><span class="hidden md:inline">on</span> <span id="sort-won" class="text-emerald-500">▼</span></div>
-                        <div onclick="sortLeaderboard('lost')" class="col-span-2 text-center hover:text-emerald-500 flex justify-center items-center gap-1 transition-colors" title="Tags Lost"><span class="text-sm md:text-base text-rose-500">L</span><span class="hidden md:inline">st</span> <span id="sort-lost" class="text-emerald-500"></span></div>
-                    </div>
-                    <div id="leaderboard-list" class="divide-y divide-slate-50">
-                        <div class="p-16 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Syncing Database...</div>
+                <!-- Image Preview Area -->
+                <div id="preview-container" class="hidden mt-4">
+                    <p class="text-xs font-semibold text-gray-600 mb-1">Score Sheet Preview:</p>
+                    <img id="scoresheet-preview" class="max-h-48 rounded shadow-sm border border-gray-300" />
+                    <p class="text-xs text-red-600 font-bold mt-2 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        Important: You must manually attach this photo to the email window that opens.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h2 class="text-xl font-bold text-blue-900">Schedule & Game Results</h2>
+                <p class="text-sm text-gray-500">Set upcoming opponents, record final scores, and share directly to WhatsApp.</p>
+            </div>
+
+            <div class="bg-white shadow rounded-lg overflow-hidden border border-gray-200">
+                <div class="overflow-x-auto w-full">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th scope="col" class="py-3 px-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider w-16">Game #</th>
+                                <th scope="col" class="py-3 px-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider w-32">Date</th>
+                                <th scope="col" class="py-3 px-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider">Opponent Team</th>
+                                <th scope="col" class="py-3 px-4 text-center text-xs font-semibold text-blue-900 uppercase tracking-wider">Havoc Runs</th>
+                                <th scope="col" class="py-3 px-4 text-center text-xs font-semibold text-blue-900 uppercase tracking-wider">Opp Runs</th>
+                                <th scope="col" class="py-3 px-4 text-right text-xs font-semibold text-blue-900 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: Contacts -->
+        <section id="content-contacts" class="tab-content hidden">
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-blue-900">Team Contacts</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Coaches Section -->
+                <div class="md:col-span-1">
+                    <h3 class="text-lg font-semibold text-blue-900 mb-3 border-b-2 border-yellow-400 pb-2">Coaches / Volunteers</h3>
+                    <div class="space-y-4" id="coaches-list">
+                        <!-- Populated by JS -->
                     </div>
                 </div>
-            </section>
 
-            <!-- DAMAGE REPORT -->
-            <section id="view-damage" class="hidden space-y-8 text-left">
-                <div class="bg-white p-8 md:p-10 rounded-[3rem] shadow-xl border border-slate-200">
-                    <div class="flex flex-col md:flex-row justify-between md:items-center gap-6">
-                        <div>
-                            <h2 class="text-3xl font-black text-slate-800 tracking-tight">Damage Report</h2>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Viewing results for:</p>
-                        </div>
-                        <div class="relative w-full md:w-auto">
-                            <select id="damage-view-select" onchange="window.changeDamageView(this.value)" class="w-full md:w-64 p-4 bg-emerald-50 border-2 border-emerald-100 rounded-2xl font-black text-emerald-800 outline-none focus:border-emerald-500 appearance-none cursor-pointer">
-                                </select>
-                            <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-emerald-600">
-                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
-                            </div>
-                        </div>
+                <!-- Players Section -->
+                <div class="md:col-span-2">
+                    <h3 class="text-lg font-semibold text-blue-900 mb-3 border-b-2 border-yellow-400 pb-2">Player Roster</h3>
+                    <div class="bg-white shadow rounded-lg overflow-hidden border border-gray-200">
+                        <ul class="divide-y divide-gray-200" id="contacts-list">
+                            <!-- Populated by JS -->
+                        </ul>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: League Rules -->
+        <section id="content-rules" class="tab-content hidden">
+            <!-- ZERO TOLERANCE BANNER -->
+            <div class="bg-red-600 text-white rounded-lg shadow-md p-5 mb-6">
+                <h3 class="text-lg font-bold flex items-center mb-2">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    ZERO TOLERANCE POLICY: YOUTH UMPIRES
+                </h3>
+                <p class="text-sm text-red-50">Please be reminded that many of our officials are youth umpires. The league enforces a strict <strong>Zero Tolerance Policy</strong> for any issues, arguments, or abuse directed at umpires. Coaches are responsible for the behavior of their staff, players, and parents.</p>
+            </div>
+
+            <div class="mb-6 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-blue-900">MEGS 2026 Youth By-Laws</h2>
+                    <p class="text-sm text-gray-500 mt-1">Official rule guidelines for the U13 Division.</p>
+                </div>
+                <div class="hidden sm:block">
+                    <span class="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded border border-red-200">U13 Specific</span>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
                     
-                    <div id="damage-stats" class="flex flex-wrap gap-3 mt-6"></div>
-                </div>
-                
-                <div id="damage-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-            </section>
+                    <!-- Left Column -->
+                    <div class="p-6 space-y-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-900 border-b pb-2 mb-3">Game Duration & Roster</h3>
+                            <ul class="space-y-2 text-sm text-gray-700">
+                                <li><strong class="text-blue-900">Total Innings:</strong> Games are scheduled for <strong>6 innings</strong>.</li>
+                                <li><strong class="text-blue-900">Minimum Players & Late Arrivals:</strong> A team must have a minimum of <strong>7 players</strong> to field a team and start the game. If a player shows up late, they must be added to the bottom of the batting order (bottom of the inning).</li>
+                                <li><strong class="text-blue-900">Continuous Batting:</strong> All players on the roster must bat in a continuous order.</li>
+                                <li><strong class="text-blue-900">Mandatory Play (Sitting):</strong> Coaches must ensure fair defensive rotation. <strong>No player may sit out more than 2 innings per game.</strong></li>
+                            </ul>
+                        </div>
 
-            <!-- GALLERY -->
-            <section id="view-gallery" class="hidden space-y-8 text-left">
-                <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-200">
-                    <h2 class="text-3xl font-black text-slate-800 tracking-tight">Photoboard</h2>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Evidence of the carnage</p>
-                </div>
-                <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
-            </section>
-
-            <!-- SCHEDULED MATCHES SECTION -->
-            <section id="view-scheduled" class="hidden space-y-8 text-left">
-                <div class="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-200">
-                    <h2 class="text-3xl font-black text-slate-800 tracking-tight">Upcoming Battles</h2>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">The calm before the storm</p>
-                </div>
-                <div id="scheduled-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </section>
-
-            <!-- RULES -->
-            <section id="view-rules" class="hidden space-y-8 text-left">
-                <div class="bg-white p-8 md:p-12 rounded-[3rem] shadow-xl border border-slate-200">
-                    <div class="flex justify-center mb-8">
-                        <img src="IMG_2087.png" alt="BattleTags Logo" class="w-48 md:w-64 h-auto" onerror="this.outerHTML='<h2 class=\'text-2xl font-black text-emerald-600 mb-4\'>BATTLETAGS</h2>'">
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-900 border-b pb-2 mb-3">Field Dimensions</h3>
+                            <ul class="space-y-2 text-sm text-gray-700">
+                                <li><strong class="text-blue-900">Pitching Distance:</strong> The pitching rubber is set at <strong>38 feet</strong> for the U13 division.</li>
+                                <li><strong class="text-blue-900">Base Paths:</strong> Bases are set at <strong>55 feet</strong> (standard U13) or 60 feet depending on field configuration.</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-900 border-b pb-2 mb-3">Base Running</h3>
+                            <ul class="space-y-2 text-sm text-gray-700">
+                                <li><strong class="text-blue-900">Leading Off:</strong> Runners cannot take a lead until the pitched ball crosses home plate.</li>
+                                <li><strong class="text-blue-900">Advancing on a Walk:</strong> In one continuous motion, a batter-runner who receives a walk may advance to and attempt to take 2nd base. This is permitted <strong>even if the pitcher has the ball inside the pitching circle.</strong></li>
+                            </ul>
+                        </div>
                     </div>
-                    <div class="space-y-2 mb-10 text-center">
-                        <h2 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">How it Works</h2>
-                        <div class="w-16 h-1.5 bg-emerald-500 mx-auto rounded-full mt-4"></div>
-                    </div>
-                    <div class="space-y-8">
-                        <div class="flex gap-4 items-start">
-                            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0 mt-1"><i data-lucide="swords" class="w-6 h-6"></i></div>
-                            <div>
-                                <h3 class="text-xl font-black text-slate-800 tracking-tight">The Arsenal</h3>
-                                <p class="text-slate-600 leading-relaxed mt-2 font-medium">BattleTags is an ongoing match-play war. Every player starts the season armed with exactly <strong>26 physical Tags</strong>.</p>
-                            </div>
+
+                    <!-- Right Column -->
+                    <div class="p-6 space-y-6 bg-gray-50">
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-900 border-b pb-2 mb-3">Mercy Rules</h3>
+                            <ul class="space-y-3 text-sm text-gray-700">
+                                <li class="bg-white p-3 rounded border shadow-sm">
+                                    <strong class="block text-blue-900 mb-1">Per Inning Limits:</strong> 
+                                    Innings 1 through 4 are capped at a maximum of <strong>5 runs</strong> per team. 
+                                    Innings 5 and 6 are capped at a maximum of <strong>8 runs</strong> per team.
+                                </li>
+                                <li class="bg-white p-3 rounded border shadow-sm">
+                                    <strong class="block text-blue-900 mb-1">Game Mercy (15 Runs):</strong>
+                                    The game is called if a team is leading by 15 runs after <strong>3 or more full innings</strong>.
+                                </li>
+                                <li class="bg-white p-3 rounded border shadow-sm">
+                                    <strong class="block text-blue-900 mb-1">Game Mercy (10 Runs):</strong>
+                                    The game is called if a team is leading by 10 runs after <strong>4 or more full innings</strong> (or 3½ innings if the home team is ahead).
+                                </li>
+                            </ul>
                         </div>
-                        <div class="flex gap-4 items-start">
-                            <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center shrink-0 mt-1"><i data-lucide="crosshair" class="w-6 h-6"></i></div>
-                            <div>
-                                <h3 class="text-xl font-black text-slate-800 tracking-tight">The Challenge</h3>
-                                <p class="text-slate-600 leading-relaxed mt-2 font-medium">Challenge anyone to head-to-head Match Play. Win holes, go up. Lose holes, go down.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4 items-start">
-                            <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center shrink-0 mt-1"><i data-lucide="coffee" class="w-6 h-6"></i></div>
-                            <div>
-                                <h3 class="text-xl font-black text-slate-800 tracking-tight">The Breakfast Ball</h3>
-                                <p class="text-slate-600 leading-relaxed mt-2 font-medium">Every player gets a breakfast ball on the first hole. However, choose wisely: if you elect to hit a second ball, you are <strong>committed to that second ball</strong>. No playing your first!</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4 items-start">
-                            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0 mt-1"><i data-lucide="smartphone" class="w-6 h-6"></i></div>
-                            <div>
-                                <h3 class="text-xl font-black text-slate-800 tracking-tight">To The Victor Go The Spoils</h3>
-                                <p class="text-slate-600 leading-relaxed mt-2 font-medium">Win the match, capture a Tag. The <strong>winner</strong> logs the victory to update the Damage Report.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4 items-start">
-                            <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center shrink-0 mt-1"><i data-lucide="camera" class="w-6 h-6"></i></div>
-                            <div>
-                                <h3 class="text-xl font-black text-slate-800 tracking-tight">Pics or it Didn't Happen</h3>
-                                <p class="text-slate-600 leading-relaxed mt-2 font-medium">When submitting a win, uploading photographic evidence of the post-match handshake (or the loser handing over the tag) is highly encouraged. It gets added to the Photoboard Gallery for everyone to see.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4 items-start">
-                            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center shrink-0 mt-1"><i data-lucide="trophy" class="w-6 h-6"></i></div>
-                            <div>
-                                <h3 class="text-xl font-black text-slate-800 tracking-tight">The Glory</h3>
-                                <p class="text-slate-600 leading-relaxed mt-2 font-medium">The live standings track every match played, tags won, and tags lost. The player with the most Tags won by the end of the season takes ultimate bragging rights.</p>
-                            </div>
+
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-900 border-b pb-2 mb-3">Pitching Restrictions</h3>
+                            <ul class="space-y-2 text-sm text-gray-700">
+                                <li><strong class="text-blue-900">Inning Limits:</strong> Pitchers are restricted to a maximum of <strong>3 innings</strong> per game to protect their arms.</li>
+                                <li><strong class="text-blue-900">Definition:</strong> Delivering one single pitch in an inning constitutes a full inning pitched for the purpose of this rule.</li>
+                                <li><strong class="text-blue-900">Hit Batters:</strong> If a pitcher hits <strong>3 batters</strong> in a game, they must be removed from the pitching position immediately.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-        </main>
-    </div>
+    </main>
 
-    <!-- Firebase SDK 11.6.1 -->
+    <!-- JavaScript implemented as an ES module for Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, updateDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const DATABASE_FOLDER_NAME = 'friday-harbour-battle-tags';
-
-        // --- FIREBASE CONFIGURATION ---
-        let firebaseConfig;
-        let activeAppId;
+        // --- Core Data Initialization ---
+        const players = [
+            { name: "Carson, Blythe", phone: "647-220-1086", email: "Doug@douglasmacdonald.com" },
+            { name: "Flannagan, Paige", phone: "416-453-3526", email: "Cflanpersonal@gmail.com" },
+            { name: "Gdyczynski, Brittany", phone: "416-888-7845", email: "Lindsay_bernett@hotmail.com" },
+            { name: "Guerra, Scarlett rose", phone: "647-518-5551", email: "Manda.rodrigues@live.com" },
+            { name: "Lalka, Oksana", phone: "416-617-7232", email: "Natalie.lalka@gmail.com" },
+            { name: "Macdonald, Chloe", phone: "647-299-8022", email: "Kjohearn@gmail.com" },
+            { name: "Macedo, Cynthia", phone: "416-827-3131", email: "Mmc828314@gmail.com" },
+            { name: "Mazzucco, Mariella", phone: "416-820-1788", email: "Luigi_mazz@yahoo.com" },
+            { name: "Nico, Emilia", phone: "647-781-8077", email: "nico_daniela@hotmail.com" },
+            { name: "Pimentel, Amelia", phone: "647-339-4191", email: "Kujoe4@hotmail.com" },
+            { name: "Sousa, Sienna", phone: "416-528-9844", email: "carla.sousa04@gmail.com" },
+            { name: "Studart, Malu", phone: "437-224-8114", email: "gabistudart@gmail.com" },
+            { name: "Vilche, Sophia", phone: "647-920-3329", email: "stephanievilche@gmail.com" }
+        ];
         
-        try {
-            firebaseConfig = JSON.parse(__firebase_config);
-            activeAppId = typeof __app_id !== 'undefined' ? __app_id : DATABASE_FOLDER_NAME;
-        } catch (e) {
-            firebaseConfig = {
-                apiKey: "AIzaSyDf_1RE4hscqVVbHoN7Vvqoylj8elWLUn4",
-                authDomain: "battletags-27390.firebaseapp.com",
-                projectId: "battletags-27390",
-                storageBucket: "battletags-27390.firebasestorage.app",
-                messagingSenderId: "930795580018",
-                appId: "1:930795580018:web:b82b95d64572483f85f0eb"
-            };
-            activeAppId = DATABASE_FOLDER_NAME;
-        }
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        
-        let db;
-        try { db = initializeFirestore(app, { localCache: persistentLocalCache() }); } 
-        catch (e) { db = getFirestore(app); }
-        const storage = getStorage(app); 
-
-        // --- GLOBAL STATE ---
-        let currentUser = null;       // The name (e.g. "Mike Brigden")
-        let currentGroup = null;      // Multi-Tenant Group (e.g. "BattleTagGroup1")
-        let viewingDamageFor = null; 
-        
-        let rawPlayers = [];
-        let rawMatches = [];
-        let currentSort = { column: 'won', direction: 'desc' };
-
-        // --- MAGIC 8 BALL LOGIC ---
-        const golfGodSayings = [
-            "Signs point to a win",
-            "Signs point to a loss",
-            "Buy more balls, the gods say No",
-            "Fore Left, the outlook is bad",
-            "Try again later",
-            "Crushing victory",
-            "Crushing defeat",
-            "Too much time in the S2, loss",
-            "You will putt well, win",
-            "You will drive well, win",
-            "Bring a helmet, too tough to call",
-            "Tag is safe",
-            "Tag and dignity are at risk",
-            "Slow and steady wins the race",
-            "Centre of the green is where the winners circle is",
-            "Meet me at 9 o'clock on the 9th green"
+        const coaches = [
+            { name: "Craig Flannagan", role: "Volunteer", phone: "416-453-3526", email: "cflanpersonal@gmail.com", risSent: true },
+            { name: "Jorge Guerra", role: "Volunteer", phone: "N/A", email: "Jorgeguerra081@gmail.com", risSent: true },
+            { name: "Jose Pimentel", role: "Volunteer", phone: "647-339-4191", email: "Kujoe4@hotmail.com", risSent: true }
         ];
 
-        window.shakeMagicBall = function() {
-            const ball = document.getElementById('magic-8-ball');
-            const textContainer = document.getElementById('magic-8-text');
+        // --- REAL SCHEDULE PARSER & STATE ---
+        let rawSchedule = [
+            { type: 'Practice', dateStr: '2026-05-19T18:30:00', loc: 'Hollycrest 2', desc: 'SHARED PRACTICE' },
+            { type: 'Game', id: '2002', dateStr: '2026-05-21T18:30:00', loc: 'CREDITVIEW WOODS', opp: '@ LADY JAYS 208' },
+            { type: 'Practice', dateStr: '2026-05-26T18:30:00', loc: 'Hollycrest 2', desc: 'SHARED PRACTICE' },
+            { type: 'Game', id: '2012', dateStr: '2026-05-28T18:30:00', loc: 'TILLSDOWN', opp: '@ TIGERS 212' },
+            { type: 'Game', id: '2017', dateStr: '2026-05-30T16:30:00', loc: 'ERINGATE 2', opp: '@ ETOBICOKE 201' },
+            { type: 'Game', id: '2018', dateStr: '2026-06-02T18:30:00', loc: 'ERINGATE 1', opp: 'vs HURRICANES 211' },
+            { type: 'Game', id: '2021', dateStr: '2026-06-04T18:30:00', loc: 'FLEETWOOD', opp: '@ MAJORS 209' },
+            { type: 'Practice', dateStr: '2026-06-09T18:30:00', loc: 'Hollycrest 1', desc: 'SHARED PRACTICE' },
+            { type: 'Game', id: '2030', dateStr: '2026-06-11T18:30:00', loc: 'ERINGATE 1', opp: '@ ETOBICOKE 203' },
+            { type: 'Practice', dateStr: '2026-06-16T18:30:00', loc: 'Hollycrest 2', desc: 'SHARED PRACTICE' },
+            { type: 'Game', id: '2036', dateStr: '2026-06-18T18:30:00', loc: 'ERINGATE 1', opp: '@ ETOBICOKE 204' },
+            { type: 'Game', id: '2041', dateStr: '2026-06-23T18:30:00', loc: 'GARTHWOOD', opp: '@ HURRICANES 211' },
+            { type: 'Practice', dateStr: '2026-06-25T18:30:00', loc: 'Hollycrest 1', desc: 'PRACTICE' },
+            { type: 'Practice', dateStr: '2026-06-30T18:30:00', loc: 'Hollycrest 1', desc: 'SHARED PRACTICE' },
+            { type: 'Game', id: '2051', dateStr: '2026-07-02T18:30:00', loc: 'ERINGATE 1', opp: 'vs LADY JAYS 206' },
+            { type: 'Game', id: '2053', dateStr: '2026-07-07T18:30:00', loc: 'ERINGATE 1', opp: 'vs MAJORS 210' },
+            { type: 'Practice', dateStr: '2026-07-09T18:30:00', loc: 'Eringate 2', desc: 'PRACTICE' },
+            { type: 'Practice', dateStr: '2026-07-14T18:30:00', loc: 'Eringate 2', desc: 'SHARED PRACTICE' },
+            { type: 'Game', id: '2065', dateStr: '2026-07-16T18:30:00', loc: 'ERINGATE 2', opp: 'vs LADY JAYS 207' },
+            { type: 'Game', id: '2068', dateStr: '2026-07-21T18:30:00', loc: 'GARTHWOOD', opp: '@ ETOBICOKE 202' },
+            { type: 'Practice', dateStr: '2026-07-23T18:30:00', loc: 'Hollycrest 2', desc: 'PRACTICE' },
+            { type: 'Practice', dateStr: '2026-07-28T18:30:00', loc: 'Hollycrest 2', desc: 'SHARED PRACTICE' },
+            { type: 'Game', id: '2075', dateStr: '2026-07-30T18:30:00', loc: 'ERINGATE 2', opp: '@ LADY JAYS 206' },
+            { type: 'Practice', dateStr: '2026-08-04T18:30:00', loc: 'Hollycrest 1', desc: 'PRACTICE' },
+            { type: 'Game', id: '2083', dateStr: '2026-08-06T18:30:00', loc: 'ERINGATE 2', opp: '@ MAJORS 210' },
+            { type: 'Game', id: '2084', dateStr: '2026-08-08T09:00:00', loc: 'TILLSDOWN', opp: '@ LADY JAYS 207' },
+            { type: 'Practice', dateStr: '2026-08-11T18:30:00', loc: 'Hollycrest 1', desc: 'SHARED PRACTICE' },
+            { type: 'Game', id: '2088', dateStr: '2026-08-13T18:30:00', loc: 'ERINGATE 1', opp: 'vs ETOBICOKE 201' },
+            { type: 'Practice', dateStr: '2026-08-18T18:30:00', loc: 'Hollycrest 2', desc: 'PRACTICE' },
+            { type: 'Game', id: '2095', dateStr: '2026-08-20T18:30:00', loc: 'ERINGATE 1', opp: 'vs ETOBICOKE 203' },
+            { type: 'Game', id: '2098', dateStr: '2026-08-25T18:30:00', loc: 'TILLSDOWN', opp: '@ TIGERS 212' },
+            { type: 'Practice', dateStr: '2026-08-27T18:30:00', loc: 'Eringate 2', desc: 'PRACTICE' },
+            { type: 'Game', id: '2101', dateStr: '2026-09-01T18:30:00', loc: 'ERINGATE 1', opp: 'vs ETOBICOKE 204' },
+            { type: 'Practice', dateStr: '2026-09-03T18:30:00', loc: 'Eringate 2', desc: 'SHARED PRACTICE' },
+            { type: 'Game', id: '2108', dateStr: '2026-09-08T18:30:00', loc: 'ERINGATE 1', opp: 'vs LADY JAYS 208' }
+        ];
+
+        let schedule = [];
+        let games = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
+
+        function rebuildScheduleAndGamesArrays() {
+            schedule.length = 0;
+            games.length = 0;
+            let pracCounter = 1;
             
-            ball.classList.add('animate-shake');
-            textContainer.innerHTML = '<i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-emerald-600"></i>';
-            lucide.createIcons();
+            rawSchedule.forEach(item => {
+                const evDate = new Date(item.dateStr);
+                const isPast = evDate < today;
+                const timeStr = evDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
-            setTimeout(() => {
-                ball.classList.remove('animate-shake');
-                const randomSaying = golfGodSayings[Math.floor(Math.random() * golfGodSayings.length)];
-                textContainer.innerHTML = `<span class="text-sm tracking-tight">${randomSaying}</span>`;
-            }, 500);
-        };
-
-        // Custom Toast Notifications
-        window.showToast = function(msg, isError = false) {
-            const t = document.createElement('div');
-            t.className = `fixed bottom-10 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-2xl z-[500] transition-all duration-300 ${isError ? 'bg-rose-600' : 'bg-slate-900'}`;
-            t.innerHTML = msg;
-            document.body.appendChild(t);
-            setTimeout(() => {
-                t.style.opacity = '0';
-                setTimeout(() => t.remove(), 300);
-            }, 3000);
-        }
-
-        // Close WhatsApp Modal
-        window.closeSuccessModal = function() {
-            const modal = document.getElementById('modal-success');
-            const content = document.getElementById('modal-success-content');
-            content.classList.remove('scale-100');
-            content.classList.add('scale-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300); 
-        };
-
-        // Close Evidence Confirmation Modal
-        window.cancelPhotoSkip = function() {
-            const content = document.getElementById('modal-confirm-photo-content');
-            content.classList.replace('scale-100', 'scale-0');
-            setTimeout(() => {
-                document.getElementById('modal-confirm-photo').classList.add('hidden');
-            }, 300);
-        };
-
-        // Submit Match Without Photo (From Modal)
-        window.confirmPhotoSkip = function() {
-            window.cancelPhotoSkip();
-            executeMatchSubmission();
-        };
-
-        // --- IMAGE COMPRESSION HELPER ---
-        const compressImage = async (file, maxWidth = 1200, maxHeight = 1200, quality = 0.7) => {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.src = URL.createObjectURL(file);
-                
-                img.onload = () => {
-                    URL.revokeObjectURL(img.src);
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > maxWidth) {
-                            height = Math.round(height * (maxWidth / width));
-                            width = maxWidth;
-                        }
-                    } else {
-                        if (height > maxHeight) {
-                            width = Math.round(width * (maxHeight / height));
-                            height = maxHeight;
-                        }
-                    }
-
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            resolve(blob);
-                        } else {
-                            reject(new Error('Canvas compression failed'));
-                        }
-                    }, 'image/jpeg', quality);
-                };
-                img.onerror = (error) => reject(error);
-            });
-        };
-
-        // --- SPLASH SCREEN LOGIC ---
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const splash = document.getElementById('screen-splash');
-                if (splash) {
-                    splash.style.opacity = '0';
-                    setTimeout(() => splash.classList.add('hidden'), 1000);
-                }
-            }, 3000); 
-        });
-
-        // --- INITIALIZATION ---
-        document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
-        document.getElementById('schedule-date').value = new Date().toISOString().split('T')[0];
-        lucide.createIcons();
-
-        // Check Auth State
-        onAuthStateChanged(auth, (firebaseUser) => {
-            if (firebaseUser && firebaseUser.phoneNumber) {
-                // User is authenticated via Phone. Now we wait for the database to sync
-                // to see if their phone number matches a profile.
-                listenToDatabase(firebaseUser.phoneNumber);
-            } else {
-                // Not logged in. Show Phone UI.
-                showScreen('phone');
-            }
-        });
-
-        // --- PHONE AUTHENTICATION LOGIC ---
-        window.sendOTP = async function(e) {
-            e.preventDefault();
-            let phone = document.getElementById('phone-input').value.replace(/\D/g,'');
-            if (phone.length === 10) phone = '+1' + phone;
-            else if (!phone.startsWith('+')) phone = '+' + phone;
-
-            const btn = document.getElementById('send-code-btn');
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline"></i> Sending...';
-            lucide.createIcons();
-            btn.disabled = true;
-
-            try {
-                if (!window.recaptchaVerifier) {
-                    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                        'size': 'invisible'
-                    });
-                }
-                const confResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
-                window.confirmationResult = confResult;
-                showScreen('otp');
-            } catch(err) {
-                console.error(err);
-                showToast("Error sending code. Domain must be authorized in Firebase.", true);
-                btn.innerHTML = 'Send Code';
-                btn.disabled = false;
-            }
-        }
-
-        window.verifyOTP = async function(e) {
-            e.preventDefault();
-            const code = document.getElementById('otp-input').value;
-            const btn = document.getElementById('verify-code-btn');
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline"></i> Verifying...';
-            lucide.createIcons();
-            btn.disabled = true;
-
-            try {
-                await window.confirmationResult.confirm(code);
-                // Success! onAuthStateChanged will naturally pick up the transition.
-                document.getElementById('otp-input').value = "";
-            } catch (err) {
-                showToast("Invalid code", true);
-                btn.innerHTML = 'Verify Code';
-                btn.disabled = false;
-            }
-        }
-
-        window.logout = function() {
-            auth.signOut().then(() => {
-                currentUser = null;
-                currentGroup = null;
-                window.location.reload();
-            });
-        };
-
-        // --- MATCH CANCELLATION ---
-        window.cancelMatch = async function(matchId) {
-            if (!confirm("Are you sure you want to cancel this scheduled match?")) return;
-            try {
-                const matchRef = doc(db, 'artifacts', activeAppId, 'public', 'data', 'matches', matchId);
-                await deleteDoc(matchRef);
-                showToast("Scheduled match cancelled.");
-            } catch(err) {
-                console.error(err);
-                showToast("Failed to cancel match.", true);
-            }
-        };
-
-        // --- MULTI-TENANT DATABASE LOGIC ---
-        function listenToDatabase(phoneNumber) {
-            showScreen('loading');
-
-            const qP = collection(db, 'artifacts', activeAppId, 'public', 'data', 'players');
-            onSnapshot(qP, (snapshot) => {
-                rawPlayers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => a.name.localeCompare(b.name));
-                
-                // MULTI-TENANT ROUTING: Find the user's claimed identity based on their verified phone number
-                const myProfile = rawPlayers.find(p => p.phone === phoneNumber);
-
-                if (myProfile) {
-                    // IDENTITY FOUND! Lock them into their specific group.
-                    currentUser = myProfile.name;
-                    currentGroup = myProfile.groupId || 'BattleTagGroup1'; // Default to Group 1 for legacy data
-                    viewingDamageFor = currentUser;
-
-                    updateDropdowns();
-                    updateUserStatusDisplay();
-                    renderLeaderboard();
-                    renderDamageReport();
-                    showScreen('app');
+                if (item.type === 'Practice') {
+                    const prac = { 
+                        id: `P${pracCounter}`, 
+                        type: 'Practice', 
+                        num: pracCounter, 
+                        date: evDate, 
+                        isPast: isPast, 
+                        time: timeStr, 
+                        location: item.loc,
+                        desc: item.desc 
+                    };
+                    schedule.push(prac);
+                    pracCounter++;
                 } else {
-                    // NO IDENTITY YET. They must claim a name to be assigned to BattleTagGroup1
-                    const unclaimedPlayers = rawPlayers.filter(p => !p.phone || p.phone === "");
-                    renderIdentityClaimList(unclaimedPlayers);
-                    showScreen('identity');
+                    const game = { 
+                        id: `G${item.id}`, 
+                        type: 'Game', 
+                        num: item.id, 
+                        date: evDate, 
+                        isPast: isPast, 
+                        opponent: item.opp, 
+                        ourScore: "", 
+                        theirScore: "", 
+                        time: timeStr, 
+                        location: item.loc 
+                    };
+                    schedule.push(game);
+                    games.push(game);
                 }
-            }, (error) => console.error(error));
+            });
+        }
+        rebuildScheduleAndGamesArrays();
 
-            const qM = collection(db, 'artifacts', activeAppId, 'public', 'data', 'matches');
-            onSnapshot(qM, (snapshot) => {
-                rawMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (currentUser && currentGroup) {
-                    renderLeaderboard();
-                    renderDamageReport();
-                    renderGallery();
-                    renderScheduledMatches();
+        // State Container
+        let teamState = {
+            availability: {},
+            results: {}
+        };
+
+        players.forEach(p => {
+            teamState.availability[p.name] = {};
+            
+            schedule.forEach(ev => {
+                teamState.availability[p.name][ev.id] = 'unsure';
+            });
+            
+            games.forEach(g => {
+                teamState.results[g.num] = { opponent: g.opponent, ourScore: "", theirScore: "" };
+            });
+        });
+
+        const safeId = (str) => String(str).replace(/[^a-zA-Z0-9-]/g, '');
+
+        let isShowingPastGames = false;
+        let isShowingPastSchedule = false;
+
+        // --- Tab Switching Logic ---
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                const isDark = el.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    el.classList.remove('border-yellow-400', 'text-yellow-400', 'font-bold', 'bg-blue-950');
+                    el.classList.add('border-transparent', 'text-blue-200', 'font-medium', 'bg-blue-900');
+                } else {
+                    el.classList.remove('border-yellow-400', 'text-blue-900', 'font-bold');
+                    el.classList.add('border-transparent', 'text-gray-500', 'font-medium');
                 }
-            }, (error) => console.error(error));
-        }
+            });
 
-        // --- IDENTITY CLAIM LOGIC (First Login) ---
-        function renderIdentityClaimList(unclaimedPlayers) {
-            const list = document.getElementById('identity-list');
-            if (unclaimedPlayers.length === 0) {
-                list.innerHTML = `<div class="p-6 text-center text-slate-500 font-bold text-sm">No unclaimed profiles available. Contact your commissioner.</div>`;
-                return;
-            }
-
-            list.innerHTML = unclaimedPlayers.map(p => `
-                <button type="button" onclick="claimIdentity('${p.id}', '${p.name}')" class="w-full p-4 bg-slate-50 border-2 border-slate-100 hover:border-emerald-500 rounded-2xl font-bold text-slate-700 flex justify-between items-center group transition-all active-scale">
-                    <span class="uppercase tracking-tight text-sm">${p.name}</span>
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-emerald-500"></i>
-                </button>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        window.claimIdentity = async function(docId, playerName) {
-            try {
-                showScreen('loading');
-                const playerRef = doc(db, 'artifacts', activeAppId, 'public', 'data', 'players', docId);
-                // Permanently lock the phone number and assign to BattleTagGroup1
-                await updateDoc(playerRef, { 
-                    phone: auth.currentUser.phoneNumber,
-                    groupId: 'BattleTagGroup1' 
-                });
-                showToast("Identity Claimed Successfully!");
-                // The onSnapshot listener will immediately re-fire and route them to the main app!
-            } catch (err) {
-                console.error(err);
-                showToast("Failed to claim profile.", true);
-                showScreen('identity');
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            const isActiveDark = activeBtn.getAttribute('data-theme') === 'dark';
+            
+            if (isActiveDark) {
+                activeBtn.classList.remove('border-transparent', 'text-blue-200', 'font-medium', 'bg-blue-900');
+                activeBtn.classList.add('border-yellow-400', 'text-yellow-400', 'font-bold', 'bg-blue-950');
+            } else {
+                activeBtn.classList.remove('border-transparent', 'text-gray-500', 'font-medium');
+                activeBtn.classList.add('border-yellow-400', 'text-blue-900', 'font-bold');
             }
         };
 
-        // --- FILTER HELPERS FOR MULTI-TENANCY ---
-        function getGroupPlayers() {
-            // Only return players that belong to the current user's group
-            return rawPlayers.filter(p => (p.groupId || 'BattleTagGroup1') === currentGroup);
-        }
-        function getGroupMatches() {
-            // Only return matches that belong to the current user's group
-            return rawMatches.filter(m => (m.groupId || 'BattleTagGroup1') === currentGroup);
-        }
+        // --- Score Sheet Upload Handlers ---
+        window.previewScoreSheet = function(event) {
+            const file = event.target.files[0];
+            const previewContainer = document.getElementById('preview-container');
+            const previewImage = document.getElementById('scoresheet-preview');
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.classList.add('hidden');
+            }
+        };
 
-        // --- UI MANAGEMENT ---
-        function showScreen(screenName) {
-            ['splash', 'loading', 'phone', 'otp', 'identity', 'app'].forEach(s => {
-                const el = document.getElementById(`screen-${s}`);
-                if (el) el.classList.add('hidden');
+        window.emailLeague = function() {
+            const gameSelect = document.getElementById('league-game-select');
+            const gameNum = gameSelect.value;
+            
+            if (!gameNum) {
+                alert("Please select a game to report first.");
+                return;
+            }
+
+            const res = teamState.results[gameNum];
+            const opponentName = res.opponent.trim() || "[Opponent Name]";
+            const ourScore = res.ourScore.trim() || "[Score]";
+            const theirScore = res.theirScore.trim() || "[Score]";
+
+            const subject = `Havoc 205 - Game ${gameNum} Official Result (See attached Score Sheet)`;
+            const body = `Hello MEGS,\n\nHere is the official game result for Havoc 205 (U13):\n\nGame Number: ${gameNum}\nOpponent: ${opponentName}\n\nHavoc 205 Score: ${ourScore}\nOpponent Score: ${theirScore}\n\n*** IMPORTANT: PLEASE SEE ATTACHED PHOTO OF THE SCORE SHEET ***\n\nThank you,\nHavoc 205 Coaches`;
+            
+            const toEmail = "Mgsa@live.ca";
+            const ccEmail = "lizdinelle@hotmail.com";
+            const mailtoUrl = `mailto:${toEmail}?cc=${ccEmail}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoUrl;
+        };
+
+        // --- View Generators ---
+        function populateGameDropdowns() {
+            const resultDropdown = document.getElementById('league-game-select');
+            
+            let optionsHtml = '<option value="">-- Choose a Game --</option>';
+            
+            games.forEach((game) => {
+                const dateStr = game.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                optionsHtml += `<option value="${game.num}">Game ${game.num} (${dateStr})</option>`;
             });
-            document.getElementById(`screen-${screenName}`).classList.remove('hidden');
-            document.body.classList.toggle('overflow-hidden', screenName !== 'app');
+            
+            if (resultDropdown) {
+                resultDropdown.innerHTML = optionsHtml;
+            }
         }
 
-        window.switchView = function(viewName) {
-            const sections = ['battle', 'submit', 'standings', 'damage', 'gallery', 'scheduled', 'rules'];
-            sections.forEach(sec => {
-                document.getElementById(`view-${sec}`).classList.toggle('hidden', viewName !== sec);
+        function generateFullSchedule() {
+            const tbody = document.getElementById('full-schedule-body');
+            let html = '';
+            schedule.forEach(ev => {
+                const dateStr = ev.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const visibilityClass = ev.isPast ? 'past-schedule-event hidden' : '';
+                const rowBg = ev.isPast ? 'bg-gray-50 opacity-75' : 'bg-white';
+                const typeColor = ev.type === 'Game' ? 'text-red-700' : 'text-blue-900';
+                
+                let detailsStr = '-';
+                if (ev.type === 'Game') {
+                    const opponentStr = teamState.results[ev.num]?.opponent || ev.opponent;
+                    detailsStr = `<div class="flex items-center"><input type="text" id="sched-opp-${ev.num}" value="${opponentStr}" placeholder="Opponent..." class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 p-1 border bg-white" onchange="updateGameData('${ev.num}', 'opponent', this.value)"></div>`;
+                } else {
+                    detailsStr = `<span class="text-sm font-medium text-gray-700">${ev.desc}</span>`;
+                }
+
+                html += `
+                <tr class="hover:bg-blue-50 transition-colors ${visibilityClass} ${rowBg}">
+                    <td class="py-3 px-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-100">${dateStr}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-100">${ev.time}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm font-bold ${typeColor} border-b border-gray-100">${ev.type} ${ev.num}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-100">${ev.location}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-100">${detailsStr}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+
+            const btn = document.getElementById('toggle-past-schedule-btn');
+            let pastEventsCount = schedule.filter(e => e.isPast).length;
+            if (pastEventsCount > 0) {
+                btn.classList.remove('hidden');
+                btn.innerText = `Show Past Events (${pastEventsCount})`;
+            }
+        }
+
+        window.togglePastSchedule = function() {
+            isShowingPastSchedule = !isShowingPastSchedule;
+            document.querySelectorAll('.past-schedule-event').forEach(row => {
+                isShowingPastSchedule ? row.classList.remove('hidden') : row.classList.add('hidden');
             });
 
-            sections.forEach(sec => {
-                const navEl = document.getElementById(`nav-${sec}`);
-                if (navEl) {
-                    if (viewName === sec) {
-                        navEl.className = "flex-1 py-3 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all bg-white text-emerald-900 shadow-sm whitespace-nowrap";
-                    } else {
-                        navEl.className = "flex-1 py-3 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all text-emerald-100 opacity-60 flex items-center gap-2 justify-center whitespace-nowrap";
+            const btn = document.getElementById('toggle-past-schedule-btn');
+            let pastEventsCount = schedule.filter(e => e.isPast).length;
+            
+            if (isShowingPastSchedule) {
+                btn.innerText = "Hide Past Events";
+                btn.classList.replace('bg-gray-200', 'bg-blue-900');
+                btn.classList.replace('text-gray-700', 'text-yellow-400');
+            } else {
+                btn.innerText = `Show Past Events (${pastEventsCount})`;
+                btn.classList.replace('bg-blue-900', 'bg-gray-200');
+                btn.classList.replace('text-yellow-400', 'text-gray-700');
+            }
+        };
+
+        function renderAvailabilityCounts() {
+            schedule.forEach(ev => {
+                let count = 0;
+                players.forEach(p => {
+                    if (teamState.availability[p.name] && teamState.availability[p.name][ev.id] === 'attending') {
+                        count++;
+                    }
+                });
+                const countEl = document.getElementById(`count-${ev.id}`);
+                if (countEl) {
+                    countEl.innerText = `${count} Avail`;
+                    if (count < 7) {
+                        countEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded mt-1 inline-block bg-red-200 text-red-800";
+                    } else if (count < 9) { // 7 or 8 players
+                        countEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded mt-1 inline-block bg-yellow-200 text-yellow-800";
+                    } else { // 9+ players
+                        countEl.className = "text-[10px] font-bold px-1.5 py-0.5 rounded mt-1 inline-block bg-green-200 text-green-800";
                     }
                 }
             });
-        };
-
-        window.changeDamageView = function(name) {
-            viewingDamageFor = name;
-            renderDamageReport();
         }
 
-        // --- WRITING DATA (Tagging with currentGroup) ---
-        document.getElementById('schedule-form').onsubmit = async function(e) {
-            e.preventDefault();
-            if (!currentUser || !currentGroup) return;
-
-            const opponent = document.getElementById('schedule-opponent').value;
-            const date = document.getElementById('schedule-date').value;
-            const btn = document.getElementById('schedule-btn');
-
-            if (!opponent) return;
-
-            const pairId = [currentUser, opponent].sort().join('_').replace(/\s+/g, '');
-            const existingMatch = getGroupMatches().find(m => m.id === pairId);
+        function generateAvailability() {
+            const thead = document.getElementById('schedule-head');
+            let headHtml = `<tr><th scope="col" class="sticky-col py-3 px-4 text-left text-xs font-semibold text-blue-900 uppercase tracking-wider w-48 min-w-[12rem] max-w-[12rem] border-b-2 border-gray-200 z-20">Player Name</th>`;
             
-            if (existingMatch && existingMatch.winner) {
-                showToast("You have already played this opponent!", true);
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Syncing...`;
-            lucide.createIcons();
-
-            try {
-                const matchDocRef = doc(db, 'artifacts', activeAppId, 'public', 'data', 'matches', pairId);
-                await setDoc(matchDocRef, {
-                    status: 'scheduled',
-                    player1: currentUser,
-                    player2: opponent,
-                    scheduledDate: date,
-                    scheduledBy: currentUser, // Tracks the Booker
-                    groupId: currentGroup, // MULTI-TENANT SECURE TAG
-                    timestamp: new Date().toISOString()
-                });
-
-                let waText = `🗓️ *BATTLETAG SCHEDULED*\n${currentUser.toUpperCase()} is going to battle against ${opponent.toUpperCase()} on ${date}! ⚔️`;
-                document.getElementById('wa-share-btn').href = `https://wa.me/?text=${encodeURIComponent(waText)}`;
-                document.getElementById('modal-success-title').innerText = "Battle Scheduled!";
-                document.getElementById('modal-success-subtitle').innerText = "Added to the board.";
-                document.getElementById('schedule-opponent').value = "";
+            schedule.forEach(ev => {
+                const dateStr = ev.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const visibilityClass = ev.isPast ? 'past-game hidden' : '';
+                const bgClass = ev.isPast ? 'bg-gray-200 opacity-75' : 'bg-gray-100';
                 
-                switchView('scheduled');
+                let currentIndicator = '';
+                if (ev.date.getTime() === today.getTime()) {
+                    currentIndicator = '<span class="inline-block bg-yellow-400 text-blue-900 px-1.5 py-0.5 rounded text-[10px] font-bold mt-1 shadow-sm">TODAY</span>';
+                }
+
+                headHtml += `
+                <th scope="col" class="${visibilityClass} py-3 px-2 text-center border-b-2 border-gray-200 ${bgClass} w-32 min-w-[8rem] max-w-[8rem] relative">
+                    <div class="text-xs font-bold text-gray-700 uppercase tracking-wider truncate" title="${ev.type} ${ev.num}">${ev.type} ${ev.num}</div>
+                    <div class="text-[11px] text-gray-500 font-normal mt-0.5">${dateStr}</div>
+                    <div id="count-${ev.id}"></div>
+                    ${currentIndicator}
+                </th>`;
+            });
+            headHtml += `</tr>`;
+            thead.innerHTML = headHtml;
+
+            const tbody = document.getElementById('schedule-body');
+            let bodyHtml = '';
+            players.forEach(player => {
+                bodyHtml += `<tr class="hover:bg-gray-50 transition-colors">
+                    <td class="sticky-col py-2 px-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-100 z-10">${player.name}</td>`;
                 
-                const modal = document.getElementById('modal-success');
-                modal.classList.remove('hidden');
-                setTimeout(() => document.getElementById('modal-success-content').classList.replace('scale-0', 'scale-100'), 10);
-            } catch (err) {
-                showToast("Failed to schedule match.", true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<i data-lucide="calendar-plus" class="w-5 h-5"></i> Schedule Match`;
-                lucide.createIcons();
-            }
-        };
-
-        // --- SUBMIT RESULTS FLOW ---
-        document.getElementById('match-form').onsubmit = async function(e) {
-            e.preventDefault();
-            if (!currentUser || !currentGroup) return;
-
-            const opponent = document.getElementById('report-opponent').value;
-            if (!opponent) return;
-
-            const photoInput = document.getElementById('match-photo');
-            
-            // CHECK FOR PHOTO: Trigger confirmation modal if empty
-            if (photoInput.files.length === 0) {
-                const modal = document.getElementById('modal-confirm-photo');
-                modal.classList.remove('hidden');
-                setTimeout(() => document.getElementById('modal-confirm-photo-content').classList.replace('scale-0', 'scale-100'), 10);
-                return; // Stop form execution here
-            }
-
-            executeMatchSubmission();
-        };
-
-        window.executeMatchSubmission = async function() {
-            const opponent = document.getElementById('report-opponent').value;
-            const date = document.getElementById('match-date').value;
-            const holesUp = document.getElementById('holes-up').value;
-            const holesRem = document.getElementById('holes-remaining').value;
-            const photoInput = document.getElementById('match-photo');
-            const btn = document.getElementById('submit-btn');
-
-            btn.disabled = true;
-            
-            try {
-                const pairId = [currentUser, opponent].sort().join('_').replace(/\s+/g, '');
-                let photoUrl = null;
-
-                if (photoInput.files.length > 0) {
-                    btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Compressing...`;
-                    lucide.createIcons();
-                    const file = photoInput.files[0];
-                    const compressedBlob = await compressImage(file, 1200, 1200, 0.7);
+                schedule.forEach(ev => {
+                    const visibilityClass = ev.isPast ? 'past-game hidden' : '';
+                    const bgClass = ev.isPast ? 'bg-gray-50' : '';
+                    const val = teamState.availability[player.name][ev.id] || 'unsure';
                     
-                    btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Uploading...`;
-                    lucide.createIcons();
-                    
-                    const safeFileName = file.name.replace(/[^a-zA-Z0-9]/g, '_') + '.jpg';
-                    const storageRef = ref(storage, `match_photos/${activeAppId}/${pairId}_${Date.now()}_${safeFileName}`);
-                    await uploadBytes(storageRef, compressedBlob);
-                    photoUrl = await getDownloadURL(storageRef);
-                }
+                    bodyHtml += `
+                    <td class="${visibilityClass} ${bgClass} py-2 px-2 whitespace-nowrap border-b border-gray-100">
+                        <select id="avail-${safeId(player.name)}-${ev.id}" onchange="updateStatusColor(this, '${player.name}', '${ev.id}')" class="status-${val} w-full text-center py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-900 transition-colors cursor-pointer shadow-sm">
+                            <option value="unsure" ${val === 'unsure' ? 'selected' : ''}>Unsure</option>
+                            <option value="attending" ${val === 'attending' ? 'selected' : ''}>Attending</option>
+                            <option value="not-attending" ${val === 'not-attending' ? 'selected' : ''}>Not Attending</option>
+                        </select>
+                    </td>`;
+                });
+                bodyHtml += `</tr>`;
+            });
+            tbody.innerHTML = bodyHtml;
 
-                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Syncing...`;
-                lucide.createIcons();
+            const btn = document.getElementById('toggle-past-btn');
+            let pastEventsCount = schedule.filter(e => e.isPast).length;
+            if (pastEventsCount > 0) {
+                btn.classList.remove('hidden');
+                btn.innerText = `Show Past Events (${pastEventsCount})`;
+            }
 
-                const matchDocRef = doc(db, 'artifacts', activeAppId, 'public', 'data', 'matches', pairId);
-                const matchData = {
-                    status: 'completed', 
-                    winner: currentUser,
-                    loser: opponent,
-                    score: `${holesUp} & ${holesRem}`,
-                    date: date,
-                    groupId: currentGroup, // MULTI-TENANT SECURE TAG
-                    timestamp: new Date().toISOString()
-                };
+            renderAvailabilityCounts();
+        }
 
-                if (photoUrl) matchData.photoUrl = photoUrl;
-                await setDoc(matchDocRef, matchData);
+        window.togglePastGames = function() {
+            isShowingPastGames = !isShowingPastGames;
+            document.querySelectorAll('.past-game').forEach(cell => {
+                isShowingPastGames ? cell.classList.remove('hidden') : cell.classList.add('hidden');
+            });
 
-                let waText = `🚨 *BATTLETAG ALERT*\n${currentUser.toUpperCase()} just captured a tag from ${opponent.toUpperCase()}! (${holesUp} & ${holesRem}) ⚔️\n\nCheck the live Damage Report!`;
-                if(photoUrl) waText += `\n\n📸 Evidence uploaded! Open the app Gallery to see the carnage.`;
-                
-                document.getElementById('wa-share-btn').href = `https://wa.me/?text=${encodeURIComponent(waText)}`;
-                document.getElementById('modal-success-title').innerText = "Tag Captured!";
-                document.getElementById('modal-success-subtitle').innerText = "Your win has been synced to the database.";
-
-                document.getElementById('report-opponent').value = "";
-                document.getElementById('holes-up').value = "";
-                document.getElementById('holes-remaining').value = "";
-                document.getElementById('match-photo').value = ""; 
-                
-                const modal = document.getElementById('modal-success');
-                modal.classList.remove('hidden');
-                setTimeout(() => document.getElementById('modal-success-content').classList.replace('scale-0', 'scale-100'), 10);
-
-            } catch (err) {
-                console.error(err);
-                showToast("Failed to process or upload photo.", true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<i data-lucide="upload-cloud" class="w-5 h-5"></i> Submit Win`;
-                lucide.createIcons();
+            const btn = document.getElementById('toggle-past-btn');
+            let pastEventsCount = schedule.filter(e => e.isPast).length;
+            
+            if (isShowingPastGames) {
+                btn.innerText = "Hide Past Events";
+                btn.classList.replace('bg-gray-200', 'bg-blue-900');
+                btn.classList.replace('text-gray-700', 'text-yellow-400');
+            } else {
+                btn.innerText = `Show Past Events (${pastEventsCount})`;
+                btn.classList.replace('bg-blue-900', 'bg-gray-200');
+                btn.classList.replace('text-yellow-400', 'text-gray-700');
             }
         };
 
-        // --- RENDER DOM UPDATES (Filtered by Group) ---
-        function updateDropdowns() {
-            const oppSelect = document.getElementById('report-opponent');
-            const scheduleSelect = document.getElementById('schedule-opponent');
-            const damageSelect = document.getElementById('damage-view-select');
+        function generateResults() {
+            const tbody = document.getElementById('results-body');
             
-            const groupPlayers = getGroupPlayers();
-
-            if (currentUser && oppSelect) {
-                oppSelect.innerHTML = '<option value="">Select Opponent...</option>';
-                scheduleSelect.innerHTML = '<option value="">Select Opponent...</option>';
-                groupPlayers.filter(p => p.name !== currentUser).forEach(p => {
-                    oppSelect.add(new Option(p.name, p.name));
-                    scheduleSelect.add(new Option(p.name, p.name));
-                });
-            }
-
-            if (damageSelect) {
-                damageSelect.innerHTML = '';
-                groupPlayers.forEach(p => {
-                    const opt = new Option(p.name, p.name);
-                    if (p.name === viewingDamageFor) opt.selected = true;
-                    damageSelect.add(opt);
-                });
-            }
-        }
-
-        function updateUserStatusDisplay() {
-            if (!currentUser) return;
-            const pData = getGroupPlayers().find(p => p.name === currentUser);
-            let displayHtml = `${currentUser}`;
-            if (pData) {
-                const isPaid = pData.paid === 'Y';
-                displayHtml += `<span class="ml-1 font-black ${isPaid ? 'text-emerald-500' : 'text-rose-500'}">(${isPaid ? 'PAID UP' : 'NOT PAID'})</span>`;
-            }
-            document.getElementById('display-user-name').innerHTML = displayHtml;
-        }
-
-        window.sortLeaderboard = function(column) {
-            if (currentSort.column === column) currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-            else { currentSort.column = column; currentSort.direction = column === 'name' ? 'asc' : 'desc'; }
-            renderLeaderboard();
-        };
-
-        function renderLeaderboard() {
-            const listEl = document.getElementById('leaderboard-list');
-            const groupPlayers = getGroupPlayers();
-            const groupMatches = getGroupMatches();
-
-            if (groupPlayers.length === 0) {
-                listEl.innerHTML = '<div class="p-16 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Syncing Database...</div>';
-                return;
-            }
-
-            const statsMap = {};
-            groupPlayers.forEach(p => {
-                statsMap[p.name] = { name: p.name, played: 0, won: 0, lost: 0 };
-            });
-            
-            groupMatches.forEach(m => {
-                if (m.winner) {
-                    if (statsMap[m.winner]) { statsMap[m.winner].won++; statsMap[m.winner].played++; }
-                    if (statsMap[m.loser]) { statsMap[m.loser].lost++; statsMap[m.loser].played++; }
-                }
-            });
-
-            const sorted = Object.values(statsMap).sort((a, b) => {
-                let valA = a[currentSort.column];
-                let valB = b[currentSort.column];
-                let result = 0;
-                if (currentSort.column === 'name') result = currentSort.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                else result = currentSort.direction === 'asc' ? valA - valB : valB - valA;
-                return result === 0 ? a.name.localeCompare(b.name) : result;
-            });
-
-            listEl.innerHTML = sorted.map((p, i) => `
-                <div class="grid grid-cols-12 gap-2 items-center p-4 md:p-5 hover:bg-slate-50 transition-colors">
-                    <div class="col-span-6 flex items-center gap-3 overflow-hidden">
-                        <span class="w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center font-black text-[10px] md:text-xs shrink-0 ${i < 3 && currentSort.column === 'won' && currentSort.direction === 'desc' ? 'bg-amber-400 text-white shadow-md' : 'bg-slate-100 text-slate-400'}">
-                            ${i + 1}
-                        </span>
-                        <span class="font-bold text-slate-800 uppercase tracking-tight truncate text-xs md:text-base">${p.name}</span>
-                    </div>
-                    <div class="col-span-2 text-center font-bold text-slate-500 text-xs md:text-base">${p.played}</div>
-                    <div class="col-span-2 text-center font-black text-emerald-600 text-sm md:text-lg">${p.won}</div>
-                    <div class="col-span-2 text-center font-bold text-rose-500 text-xs md:text-base">${p.lost}</div>
-                </div>
-            `).join('');
-
-            ['name', 'played', 'won', 'lost'].forEach(col => {
-                const el = document.getElementById(`sort-${col}`);
-                if (el) el.innerText = currentSort.column === col ? (currentSort.direction === 'asc' ? '▲' : '▼') : '';
-            });
-        }
-
-        function renderDamageReport() {
-            const grid = document.getElementById('damage-grid');
-            const statsContainer = document.getElementById('damage-stats');
-            
-            const groupPlayers = getGroupPlayers();
-            const groupMatches = getGroupMatches();
-
-            if (!viewingDamageFor || groupPlayers.length === 0) return;
-
-            let playedCount = 0; let wonCount = 0; let lostCount = 0;
-
-            const html = groupPlayers.filter(p => p.name !== viewingDamageFor).map(opp => {
-                const pairId = [viewingDamageFor, opp.name].sort().join('_').replace(/\s+/g, '');
-                const match = groupMatches.find(m => m.id === pairId);
+            let html = '';
+            games.forEach((game, index) => {
+                const dateStr = game.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const rowBg = game.isPast ? 'bg-gray-50' : 'bg-white';
+                const res = teamState.results[game.num];
                 
-                let status = 'unplayed';
-                if (match) {
-                    if (match.winner === viewingDamageFor) status = 'won';
-                    else if (match.winner && match.winner !== viewingDamageFor) status = 'lost';
-                    else if (!match.winner && match.scheduledDate) status = 'scheduled';
-                }
+                const opponentStr = res.opponent.trim() !== '' ? res.opponent : 'TBD';
 
-                if (status === 'won') wonCount++;
-                if (status === 'lost') lostCount++;
-
-                const styleClass = status === 'won' ? 'bg-emerald-50 border-emerald-200 shadow-sm' : 
-                                   status === 'lost' ? 'bg-rose-50 border-rose-200 shadow-sm' : 
-                                   status === 'scheduled' ? 'bg-amber-50 border-amber-200 shadow-sm' : 'bg-white border-slate-100 opacity-70';
-                
-                const statusText = status === 'unplayed' ? 'Not Played' : 
-                                   status === 'won' ? `Captured (${match.score})` : 
-                                   status === 'lost' ? `Lost (${match.score})` : 'Scheduled Battle';
-
-                const photoIconHtml = (match && match.photoUrl) ? `<a href="${match.photoUrl}" target="_blank" class="text-emerald-500 hover:text-emerald-700 bg-emerald-100 p-1 rounded inline-flex transition-colors" title="View Evidence Photo"><i data-lucide="camera" class="w-3 h-3"></i></a>` : '';
-
-                let dateHtml = '';
-                if (status === 'scheduled') dateHtml = `<div class="flex items-center gap-1.5 mt-1 text-[9px] font-bold text-amber-600 uppercase"><i data-lucide="calendar-clock" class="w-3 h-3"></i> Set for ${match.scheduledDate}</div>`;
-                else if (match && match.date) dateHtml = `<div class="flex items-center gap-1.5 mt-1 text-[9px] font-bold text-slate-400 uppercase"><i data-lucide="calendar" class="w-3 h-3"></i> ${match.date} ${photoIconHtml}</div>`;
-                
-                const icon = status === 'unplayed' ? `<i data-lucide="minus-circle" class="w-6 h-6 text-slate-300"></i>` : 
-                             status === 'scheduled' ? `<i data-lucide="calendar-clock" class="w-6 h-6 text-amber-500"></i>` : 
-                             status === 'won' ? `<span class="text-2xl drop-shadow-sm" title="Tag Captured">🏷️</span>` : `<span class="text-2xl drop-shadow-sm" title="Defeated">💀</span>`;
-
-                return `
-                    <div class="p-6 rounded-[2rem] border-2 flex items-center justify-between transition-all ${styleClass}">
-                        <div class="text-left">
-                            <h4 class="font-black text-base text-slate-800 uppercase tracking-tight">${opp.name}</h4>
-                            <p class="text-[10px] font-black uppercase opacity-60 tracking-wider">${statusText}</p>
-                            ${dateHtml}
-                        </div>
-                        ${icon}
-                    </div>
-                `;
-            }).join('');
-
-            playedCount = wonCount + lostCount;
-            statsContainer.innerHTML = `
-                <div class="flex items-center gap-2 bg-slate-100 border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                    <span class="text-sm">⚔️</span> ${playedCount} Played
-                </div>
-                <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                    <span class="text-sm">🏷️</span> ${wonCount} Won
-                </div>
-                <div class="flex items-center gap-2 bg-rose-50 border border-rose-100 text-rose-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">
-                    <span class="text-sm">💀</span> ${lostCount} Lost
-                </div>
-            `;
-            grid.innerHTML = html;
-            lucide.createIcons();
-        }
-
-        function renderGallery() {
-            const grid = document.getElementById('gallery-grid');
-            if (!grid) return;
-            
-            const photos = getGroupMatches()
-                .filter(m => m.photoUrl && m.winner)
-                .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            if (photos.length === 0) {
-                grid.innerHTML = `<div class="col-span-full p-16 text-center text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 rounded-3xl">No evidence uploaded yet.</div>`;
-                return;
-            }
-
-            grid.innerHTML = photos.map(m => `
-                <div class="bg-white rounded-3xl p-3 shadow-md border border-slate-100 flex flex-col gap-3 transition-transform hover:scale-[1.02]">
-                    <a href="${m.photoUrl}" target="_blank" class="block relative aspect-square rounded-2xl overflow-hidden bg-slate-100">
-                        <img src="${m.photoUrl}" alt="Match Photo" class="w-full h-full object-cover" loading="lazy">
-                    </a>
-                    <div class="px-2 pb-2 text-left">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1"><i data-lucide="calendar" class="w-3 h-3 inline pb-0.5"></i> ${m.date}</p>
-                        <p class="text-sm font-black text-slate-800 leading-tight">${m.winner} <span class="text-emerald-500 font-bold">def.</span> ${m.loser}</p>
-                        <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-wider">${m.score}</p>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function renderScheduledMatches() {
-            const grid = document.getElementById('scheduled-grid');
-            if (!grid) return;
-            
-            const upcoming = getGroupMatches()
-                .filter(m => m.status === 'scheduled')
-                .sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
-
-            if (upcoming.length === 0) {
-                grid.innerHTML = `<div class="col-span-full p-16 text-center text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 rounded-3xl">No battles scheduled currently.</div>`;
-                return;
-            }
-
-            // Get local date string for 'today' (YYYY-MM-DD format)
-            const today = new Date();
-            // offset timezone to match local day cleanly
-            const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-
-            grid.innerHTML = upcoming.map(m => {
-                // If they scheduled it, OR if it's an old scheduled match and they are player1
-                const isBooker = m.scheduledBy === currentUser || m.player1 === currentUser;
-                const isPast = m.scheduledDate < localDate;
-                
-                let statusBadge = `<span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Scheduled</span>`;
-                if (isPast) {
-                    statusBadge = `<span class="bg-rose-100 text-rose-700 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest animate-pulse shadow-sm">Waiting on Results</span>`;
-                }
-
-                let cancelBtn = '';
-                if (isBooker) {
-                    cancelBtn = `
-                        <button onclick="cancelMatch('${m.id}')" class="mt-3 text-[10px] font-black text-rose-400 uppercase tracking-widest hover:text-rose-600 flex items-center gap-1 transition-colors">
-                            <i data-lucide="x-circle" class="w-3 h-3"></i> Cancel Match
+                html += `
+                <tr class="hover:bg-blue-50 transition-colors ${rowBg}">
+                    <td class="py-3 px-4 whitespace-nowrap text-sm font-medium text-gray-900 border-b border-gray-100">${game.num}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-600 border-b border-gray-100">${dateStr}</td>
+                    <td class="py-3 px-4 whitespace-nowrap text-sm text-gray-900 font-bold border-b border-gray-100" id="opp-${game.num}">
+                        ${opponentStr}
+                    </td>
+                    <td class="py-3 px-4 whitespace-nowrap border-b border-gray-100 text-center">
+                        <input type="number" id="us-${game.num}" value="${res.ourScore}" min="0" placeholder="-" class="w-16 text-center text-sm font-bold border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 p-1.5 border" onchange="updateGameData('${game.num}', 'ourScore', this.value)">
+                    </td>
+                    <td class="py-3 px-4 whitespace-nowrap border-b border-gray-100 text-center">
+                        <input type="number" id="them-${game.num}" value="${res.theirScore}" min="0" placeholder="-" class="w-16 text-center text-sm font-bold border-gray-300 rounded-md shadow-sm focus:ring-blue-900 focus:border-blue-900 p-1.5 border" onchange="updateGameData('${game.num}', 'theirScore', this.value)">
+                    </td>
+                    <td class="py-3 px-4 whitespace-nowrap border-b border-gray-100 text-right">
+                        <button onclick="shareWhatsApp(${index})" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                            WhatsApp
                         </button>
-                    `;
+                    </td>
+                </tr>`;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        // --- Selective DOM Updater to Prevent Input Focus Stealing when Firebase Syncs ---
+        function updateDOMfromState() {
+            // Availability Sync
+            players.forEach(p => {
+                schedule.forEach(ev => {
+                    const el = document.getElementById(`avail-${safeId(p.name)}-${ev.id}`);
+                    const val = teamState.availability[p.name][ev.id];
+                    if (el && document.activeElement !== el && el.value !== val) {
+                        el.value = val;
+                        el.className = `w-full text-center py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-900 transition-colors cursor-pointer shadow-sm status-${val}`;
+                    }
+                });
+            });
+
+            renderAvailabilityCounts();
+
+            // Results Sync
+            games.forEach((g) => {
+                const oppEl = document.getElementById(`opp-${g.num}`);
+                const usEl = document.getElementById(`us-${g.num}`);
+                const themEl = document.getElementById(`them-${g.num}`);
+                const res = teamState.results[g.num];
+                
+                if (usEl && document.activeElement !== usEl && usEl.value !== res.ourScore) usEl.value = res.ourScore;
+                if (themEl && document.activeElement !== themEl && themEl.value !== res.theirScore) themEl.value = res.theirScore;
+                
+                // Update Schedule input
+                const schedOppEl = document.getElementById(`sched-opp-${g.num}`);
+                if (schedOppEl && document.activeElement !== schedOppEl && schedOppEl.value !== res.opponent) {
+                    schedOppEl.value = res.opponent;
                 }
 
-                return `
-                    <div class="bg-white p-6 rounded-[2rem] border-2 ${isPast ? 'border-rose-100' : 'border-amber-100'} shadow-sm flex items-start justify-between">
-                        <div class="text-left">
-                            <div class="flex items-center gap-2 mb-2">
-                                ${statusBadge}
-                            </div>
-                            <h4 class="font-black text-lg text-slate-800 uppercase tracking-tight">${m.player1} <span class="text-slate-400 text-sm lowercase font-bold mx-1">vs</span> ${m.player2}</h4>
-                            <div class="flex items-center gap-1.5 mt-2 text-[10px] font-bold ${isPast ? 'text-rose-400' : 'text-slate-500'} uppercase tracking-widest">
-                                <i data-lucide="calendar-clock" class="w-3 h-3"></i> ${m.scheduledDate}
-                            </div>
-                            ${cancelBtn}
-                        </div>
-                        <div class="text-3xl drop-shadow-sm opacity-50 pt-2">⚔️</div>
-                    </div>
-                `;
-            }).join('');
-            lucide.createIcons();
+                // Update Results text
+                if (oppEl) {
+                    const opponentText = res.opponent.trim() !== '' ? res.opponent : 'TBD';
+                    if (oppEl.innerText !== opponentText) {
+                        oppEl.innerText = opponentText;
+                    }
+                }
+            });
         }
-        
-        // Expose functions globally for the buttons
-        window.showScreen = showScreen;
+
+        window.updateStatusColor = function(selectElem, playerName, eventId) {
+            selectElem.className = `w-full text-center py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-900 transition-colors cursor-pointer shadow-sm status-${selectElem.value}`;
+            teamState.availability[playerName][eventId] = selectElem.value;
+            
+            renderAvailabilityCounts();
+            saveToFirebase();
+        };
+
+        window.updateGameData = function(gameNum, field, value) {
+            teamState.results[gameNum][field] = value;
+            saveToFirebase();
+        };
+
+        window.shareWhatsApp = function(index) {
+            const game = games[index];
+            const dateStr = game.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            
+            const res = teamState.results[game.num];
+            const opponentName = res.opponent.trim() || "Opponent";
+            const ourScore = res.ourScore.trim() || "?";
+            const theirScore = res.theirScore.trim() || "?";
+
+            const resultStatus = (parseInt(ourScore) > parseInt(theirScore)) ? "🎉 Great Win!" : 
+                                 (parseInt(ourScore) < parseInt(theirScore)) ? "💪 Tough game, we'll get 'em next time." : 
+                                 "🤝 Tie Game!";
+
+            const text = `⚾ *Havoc 205 Game Result* ⚾\n\n*Date:* ${dateStr}\n*Score:* Havoc 205 [ ${ourScore} ] - [ ${theirScore} ] ${opponentName}\n\n${resultStatus}`;
+            
+            const encodedText = encodeURIComponent(text);
+            const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+            window.open(whatsappUrl, '_blank');
+        };
+
+        function generateContacts() {
+            const coachesDiv = document.getElementById('coaches-list');
+            let coachesHtml = '';
+            coaches.forEach(coach => {
+                const risBadge = coach.risSent 
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800 border border-green-200">RiS: Sent ✓</span>`
+                    : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800 border border-red-200">RiS: Pending</span>`;
+
+                coachesHtml += `
+                <div class="bg-white p-4 rounded-lg shadow border border-gray-200 border-l-4 border-l-yellow-400">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-bold text-blue-900">${coach.name}</p>
+                            <p class="text-xs font-bold text-yellow-600 mb-2">${coach.role}</p>
+                        </div>
+                        ${risBadge}
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1 flex items-center"><svg class="w-4 h-4 mr-2 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg> ${coach.phone}</p>
+                    <p class="text-sm text-gray-600 mt-1 flex items-center"><svg class="w-4 h-4 mr-2 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> <a href="mailto:${coach.email}" class="text-blue-600 hover:underline">${coach.email}</a></p>
+                </div>`;
+            });
+            coachesDiv.innerHTML = coachesHtml;
+
+            const playersUl = document.getElementById('contacts-list');
+            let playersHtml = '';
+            players.forEach((player, index) => {
+                playersHtml += `
+                <li class="px-4 py-4 sm:px-6 hover:bg-gray-50 flex flex-col sm:flex-row justify-between sm:items-center transition-colors">
+                    <div class="mb-2 sm:mb-0">
+                        <p class="text-sm font-bold text-blue-900 truncate">${player.name}</p>
+                        <p class="text-sm text-gray-500 truncate flex items-center mt-1">
+                            <span class="bg-gray-200 text-blue-900 font-medium text-xs px-2 py-0.5 rounded mr-2 border border-gray-300">Player #${index + 1}</span>
+                        </p>
+                    </div>
+                    <div class="text-sm text-gray-600 flex flex-col sm:text-right space-y-1">
+                        <span class="flex items-center sm:justify-end"><svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg> ${player.phone}</span>
+                        <span class="flex items-center sm:justify-end"><svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> <a href="mailto:${player.email}" class="text-blue-600 hover:underline">${player.email}</a></span>
+                    </div>
+                </li>`;
+            });
+            playersUl.innerHTML = playersHtml;
+        }
+
+        // --- FIREBASE INITIALIZATION & SYNC LOGIC ---
+        let app, auth, db, currentUser = null, docRef = null, isFirebaseReady = false;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9VZJTpe-Rgz31kiaIzLDX2zutEcx5PgU",
+            authDomain: "havok205-9b090.firebaseapp.com",
+            projectId: "havok205-9b090",
+            storageBucket: "havok205-9b090.firebasestorage.app",
+            messagingSenderId: "89324820118",
+            appId: "1:89324820118:web:9c65b1401146c3d07b14b7"
+        };
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            isFirebaseReady = true;
+        } catch(e) {
+            console.error("Firebase init skipped:", e);
+        }
+
+        async function saveToFirebase() {
+            if (!isFirebaseReady || !currentUser || !docRef) return;
+            document.getElementById('sync-status').classList.remove('hidden'); 
+            
+            try {
+                // EXTREMELY IMPORTANT: We only update `availability` and `results`.
+                // We MUST NOT overwrite `matrix` or `lineups` to undefined, 
+                // which would delete the coach's private data.
+                await updateDoc(docRef, {
+                    availability: teamState.availability,
+                    results: teamState.results
+                });
+            } catch (e) {
+                // If it fails to update, it might mean the document doesn't exist yet
+                console.error("Failed to update doc:", e);
+            }
+            
+            setTimeout(() => document.getElementById('sync-status').classList.add('hidden'), 500);
+        }
+
+        window.onload = async function() {
+            populateGameDropdowns();
+            generateFullSchedule();
+            generateAvailability();
+            generateResults();
+            generateContacts();
+
+            if (isFirebaseReady) {
+                docRef = doc(db, 'havoc205', 'state');
+                
+                try {
+                    await signInAnonymously(auth);
+                } catch(e) {
+                    console.error("Auth error", e);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUser = user;
+                        
+                        onSnapshot(docRef, (snapshot) => {
+                            if (snapshot.exists()) {
+                                const data = snapshot.data();
+                                
+                                // MIGRATION logic for old numeric availability keys
+                                if (data.availability) {
+                                    Object.keys(data.availability).forEach(playerName => {
+                                        Object.keys(data.availability[playerName]).forEach(key => {
+                                            if (!isNaN(key)) { // if old numerical game key exists
+                                                data.availability[playerName]['G' + key] = data.availability[playerName][key];
+                                            }
+                                        });
+                                    });
+                                }
+
+                                if (data.availability) teamState.availability = { ...teamState.availability, ...data.availability };
+                                
+                                // Merge results while retaining prepopulated Opponents from schedule
+                                if (data.results) {
+                                    teamState.results = { ...teamState.results, ...data.results };
+                                    games.forEach(g => {
+                                        if (!teamState.results[g.num] || !teamState.results[g.num].opponent) {
+                                            if (!teamState.results[g.num]) teamState.results[g.num] = { ourScore: "", theirScore: "" };
+                                            teamState.results[g.num].opponent = g.opponent;
+                                        }
+                                    });
+                                }
+                                
+                                updateDOMfromState();
+                            }
+                        }, (error) => {
+                            console.error("Snapshot error:", error);
+                        });
+                    } else {
+                        currentUser = null;
+                    }
+                });
+            }
+        };
     </script>
 </body>
 </html>
