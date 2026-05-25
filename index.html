@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -278,8 +279,8 @@
     <!-- JavaScript implemented as an ES module for Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Core Data Initialization ---
         const players = [
@@ -328,18 +329,19 @@
             { type: 'Game', id: '2068', dateStr: '2026-07-21T18:30:00', loc: 'GARTHWOOD', opp: '@ ETOBICOKE 202' },
             { type: 'Practice', dateStr: '2026-07-23T18:30:00', loc: 'Hollycrest 2', desc: 'PRACTICE' },
             { type: 'Practice', dateStr: '2026-07-28T18:30:00', loc: 'Hollycrest 2', desc: 'SHARED PRACTICE' },
-            { type: 'Game', id: '2078', dateStr: '2026-07-30T18:30:00', loc: 'ERINGATE 2', opp: '@ LADY JAYS 206' },
-            { type: 'Practice', dateStr: '2026-08-04T18:30:00', loc: 'TBD', desc: 'PRACTICE' },
-            { type: 'Game', id: '2086', dateStr: '2026-08-06T18:30:00', loc: 'ERINGATE 1', opp: '@ MAJORS 209' },
+            { type: 'Game', id: '2075', dateStr: '2026-07-30T18:30:00', loc: 'ERINGATE 2', opp: '@ LADY JAYS 206' },
+            { type: 'Practice', dateStr: '2026-08-04T18:30:00', loc: 'Hollycrest 1', desc: 'PRACTICE' },
+            { type: 'Game', id: '2083', dateStr: '2026-08-06T18:30:00', loc: 'ERINGATE 2', opp: '@ MAJORS 210' },
+            { type: 'Game', id: '2084', dateStr: '2026-08-08T09:00:00', loc: 'TILLSDOWN', opp: '@ LADY JAYS 207' },
             { type: 'Practice', dateStr: '2026-08-11T18:30:00', loc: 'Hollycrest 1', desc: 'SHARED PRACTICE' },
-            { type: 'Practice', id: '2088', dateStr: '2026-08-13T18:30:00', loc: 'Hollycrest 1', opp: 'vs ETOBICOKE 201' },
-            { type: 'Practice', dateStr: '2026-08-18T18:30:00', loc: 'Eringate 2', desc: 'PRACTICE' },
-            { type: 'Game', id: '2098', dateStr: '2026-08-20T18:30:00', loc: 'ERINGATE 2', opp: 'vs ETOBICOKE 201' },
-            { type: 'Game', id: '2101', dateStr: '2026-08-25T18:30:00', loc: 'ERINGATE 1', opp: '@ ETOBICOKE 202' },
-            { type: 'Practice', dateStr: '2026-08-27T18:30:00', loc: 'HOLLYCREST 1', desc: 'PRACTICE' },
-            { type: 'Practice', dateStr: '2026-09-01T18:30:00', loc: 'ERINGATE 1', desc: 'SHARED PRACTICE' },
-            { type: 'Game', id: '2113', dateStr: '2026-09-03T18:30:00', loc: 'BIDWELL', opp: 'vs TIGERS 213' }
-            { type: 'Game', id: '2114', dateStr: '2026-09-08T18:30:00', loc: 'ERINGATE 1', opp: 'vs TIGER 213' }
+            { type: 'Game', id: '2088', dateStr: '2026-08-13T18:30:00', loc: 'ERINGATE 1', opp: 'vs ETOBICOKE 201' },
+            { type: 'Practice', dateStr: '2026-08-18T18:30:00', loc: 'Hollycrest 2', desc: 'PRACTICE' },
+            { type: 'Game', id: '2095', dateStr: '2026-08-20T18:30:00', loc: 'ERINGATE 1', opp: 'vs ETOBICOKE 203' },
+            { type: 'Game', id: '2098', dateStr: '2026-08-25T18:30:00', loc: 'TILLSDOWN', opp: '@ TIGERS 212' },
+            { type: 'Practice', dateStr: '2026-08-27T18:30:00', loc: 'Eringate 2', desc: 'PRACTICE' },
+            { type: 'Game', id: '2101', dateStr: '2026-09-01T18:30:00', loc: 'ERINGATE 1', opp: 'vs ETOBICOKE 204' },
+            { type: 'Practice', dateStr: '2026-09-03T18:30:00', loc: 'Eringate 2', desc: 'SHARED PRACTICE' },
+            { type: 'Game', id: '2108', dateStr: '2026-09-08T18:30:00', loc: 'ERINGATE 1', opp: 'vs LADY JAYS 208' }
         ];
 
         let schedule = [];
@@ -554,7 +556,7 @@
                 schedule.forEach(ev => {
                     const visibilityClass = ev.isPast ? 'past-game hidden' : '';
                     const bgClass = ev.isPast ? 'bg-gray-50' : '';
-                    const val = teamState.availability[player.name][ev.id] || 'unsure';
+                    const val = teamState.availability[player.name] ? (teamState.availability[player.name][ev.id] || 'unsure') : 'unsure';
                     
                     bodyHtml += `
                     <td class="${visibilityClass} ${bgClass} py-2 px-2 whitespace-nowrap border-b border-gray-100">
@@ -635,7 +637,7 @@
             players.forEach(p => {
                 schedule.forEach(ev => {
                     const el = document.getElementById(`avail-${safeId(p.name)}-${ev.id}`);
-                    const val = teamState.availability[p.name][ev.id];
+                    const val = teamState.availability[p.name] ? (teamState.availability[p.name][ev.id] || 'unsure') : 'unsure';
                     if (el && document.activeElement !== el && el.value !== val) {
                         el.value = val;
                         el.className = `w-full text-center py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-900 transition-colors cursor-pointer shadow-sm status-${val}`;
@@ -673,6 +675,8 @@
 
         window.updateStatusColor = function(selectElem, playerName, eventId) {
             selectElem.className = `w-full text-center py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-900 transition-colors cursor-pointer shadow-sm status-${selectElem.value}`;
+            
+            if (!teamState.availability[playerName]) teamState.availability[playerName] = {};
             teamState.availability[playerName][eventId] = selectElem.value;
             
             renderAvailabilityCounts();
@@ -748,15 +752,12 @@
             document.getElementById('sync-status').classList.remove('hidden'); 
             
             try {
-                // EXTREMELY IMPORTANT: We only update `availability` and `results`.
-                // We MUST NOT overwrite `matrix` or `lineups` to undefined, 
-                // which would delete the coach's private data.
+                // Players should ONLY update availability. 
+                // We MUST NOT overwrite matrix, lineups, or results here.
                 await updateDoc(docRef, {
-                    availability: teamState.availability,
-                    results: teamState.results
+                    availability: teamState.availability
                 });
             } catch (e) {
-                // If it fails to update, it might mean the document doesn't exist yet
                 console.error("Failed to update doc:", e);
             }
             
@@ -786,18 +787,25 @@
                             if (snapshot.exists()) {
                                 const data = snapshot.data();
                                 
-                                // MIGRATION logic for old numeric availability keys
+                                // DEEP MERGE BUG FIX: 
+                                // Instead of shallow overwriting the availability object (which deletes future 
+                                // unsaved dates), we deeply map the properties so defaults are preserved.
                                 if (data.availability) {
                                     Object.keys(data.availability).forEach(playerName => {
+                                        if (teamState.availability[playerName]) {
+                                            Object.assign(teamState.availability[playerName], data.availability[playerName]);
+                                        } else {
+                                            teamState.availability[playerName] = data.availability[playerName];
+                                        }
+                                        
+                                        // Old numerical game key migration
                                         Object.keys(data.availability[playerName]).forEach(key => {
-                                            if (!isNaN(key)) { // if old numerical game key exists
-                                                data.availability[playerName]['G' + key] = data.availability[playerName][key];
+                                            if (!isNaN(key)) { 
+                                                teamState.availability[playerName]['G' + key] = data.availability[playerName][key];
                                             }
                                         });
                                     });
                                 }
-
-                                if (data.availability) teamState.availability = { ...teamState.availability, ...data.availability };
                                 
                                 // Merge results while retaining prepopulated Opponents from schedule
                                 if (data.results) {
